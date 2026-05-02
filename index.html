@@ -172,7 +172,7 @@
       <div class="upload-tabs">
         <button class="upload-tab active" id="tabFile" onclick="switchTab('file')">📂 Un archivo</button>
         <button class="upload-tab" id="tabImg" onclick="switchTab('img')">🖼️ Una imagen</button>
-        <button class="upload-tab" id="tabCompare" onclick="switchTab('compare')" style="flex:1.2">⚖️ Comparar dos</button>
+        <button class="upload-tab" id="tabCompare" onclick="switchTab('compare')" style="flex:1.5">🔄 Comparación 360° — Prescripciones y Ventas</button>
       </div>
       <!-- File panel -->
       <div id="panelFile">
@@ -496,17 +496,21 @@ Para colors en barChart usa "#1D9E75" para crecimiento y "#D85A30" para declive.
     const custom=document.getElementById('customPrompt').value.trim();
     let messages;
     if(activeTab==='compare'){
-      const contentA=compareA.type==='img'
-        ?{type:'image',source:{type:'base64',media_type:compareA.mime,data:compareA.data}}
-        :{type:'text',text:`ARCHIVO A (${compareA.name}):\n\`\`\`\n${compareA.data.substring(0,8000)}\n\`\`\``};
-      const contentB=compareB.type==='img'
-        ?{type:'image',source:{type:'base64',media_type:compareB.mime,data:compareB.data}}
-        :{type:'text',text:`ARCHIVO B (${compareB.name}):\n\`\`\`\n${compareB.data.substring(0,8000)}\n\`\`\``};
-      messages=[{role:'user',content:[
-        contentA,
-        contentB,
-        {type:'text',text:`Compara estos dos archivos de Close-Up Analyzer y devuelve el JSON comparativo.${custom?'\nNota: '+custom:''}`}
-      ]}];
+      const parts=[];
+      if(compareA.type==='img'){
+        parts.push({type:'image',source:{type:'base64',media_type:compareA.mime,data:compareA.data}});
+        parts.push({type:'text',text:`ARCHIVO A: ${compareA.name} (imagen arriba)`});
+      } else {
+        parts.push({type:'text',text:`ARCHIVO A (${compareA.name}):\n\`\`\`\n${compareA.data.substring(0,7000)}\n\`\`\``});
+      }
+      if(compareB.type==='img'){
+        parts.push({type:'image',source:{type:'base64',media_type:compareB.mime,data:compareB.data}});
+        parts.push({type:'text',text:`ARCHIVO B: ${compareB.name} (imagen arriba)`});
+      } else {
+        parts.push({type:'text',text:`ARCHIVO B (${compareB.name}):\n\`\`\`\n${compareB.data.substring(0,7000)}\n\`\`\``});
+      }
+      parts.push({type:'text',text:`Analiza y compara AMBOS archivos. El archivo de PRESCRIPCIONES es el principal: identifica los laboratorios de prescripciones y busca esos mismos laboratorios en el archivo de VENTAS para hacer el match. Para cada laboratorio muestra su participación en prescripciones y su correspondiente dato de ventas. Detecta gaps entre prescripción alta y ventas bajas o viceversa. Devuelve el JSON comparativo con esos insights.${custom?'\nNota adicional: '+custom:''}`});
+      messages=[{role:'user',content:parts}];
     } else if(activeTab==='img'&&imageData){
       messages=[{role:'user',content:[
         {type:'image',source:{type:'base64',media_type:imageMime,data:imageData}},
