@@ -376,13 +376,32 @@
 
   function addChip(t){const ta=document.getElementById('customPrompt');ta.value=(ta.value?ta.value+' ':'')+t;ta.focus();}
 
+  const sysBase = `Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin bloques de código, sin explicaciones. El JSON debe tener exactamente esta estructura:
+{
+  "kpis": [{"label":"...","value":"...","trend":"...","trendType":"up|down|neutral"}],
+  "barChart": {"title":"...","labels":[...],"values":[...],"colors":[]},
+  "lineChart": {"title":"...","labels":[...],"series":[{"name":"...","data":[...]}]},
+  "variacionChart": {"title":"...","labels":[...],"values":[]},
+  "oportunidades": ["...","...","..."],
+  "alertas": ["...","...","..."],
+  "recomendaciones": ["...","...","..."]
+}
+- kpis: 4 métricas clave del análisis
+- barChart: ranking de los top elementos por volumen/share (máx 10)
+- lineChart: evolución temporal de los 3 elementos más importantes (máx 5 períodos)
+- variacionChart: variación neta de todos los elementos (positivos primero, negativos al final)
+- oportunidades: 3 oportunidades concretas (texto corto)
+- alertas: 3 alertas críticas (texto corto)
+- recomendaciones: 3 acciones concretas con plazo
+Para colors en barChart usa "#1D9E75" para crecimiento y "#D85A30" para declive.`;
+
   const sysPrompts={
-    prescripciones:`Eres un experto en análisis de prescripciones médicas farmacéuticas con datos de Close-Up Analyzer. Analiza los datos y proporciona: 1. Resumen ejecutivo con métricas clave 2. Tendencias por período 3. Top médicos prescriptores 4. Productos más prescritos 5. Oportunidades y alertas 6. Recomendaciones estratégicas. Usa tablas cuando sea útil.`,
-    market_share:`Eres un experto en participación de mercado farmacéutico. Analiza y proporciona: 1. Market share actual vs períodos anteriores 2. Ranking de laboratorios y productos 3. Análisis por molécula 4. Ganadores y perdedores 5. Oportunidades para incrementar participación 6. Recomendaciones. Usa ↑↓ para variaciones.`,
-    medicos:`Eres experto en segmentación de médicos prescriptores. Analiza y proporciona: 1. Segmentación por potencial (A/B/C) 2. Top médicos por especialidad 3. Médicos de alto valor no trabajados 4. Perfil de médico ideal 5. Estrategia de visita médica recomendada 6. Priorización de cartera.`,
-    producto:`Eres experto en portafolio farmacéutico. Analiza y proporciona: 1. Ranking por volumen y valor 2. Evolución por período 3. Análisis por presentación 4. Productos estrella vs en declive 5. Oportunidades de portafolio 6. Recomendaciones comerciales por producto.`,
-    molecula:`Eres experto en análisis terapéutico. Analiza y proporciona: 1. Comparativa de moléculas en mismo segmento 2. Share por molécula 3. Tendencias de adopción 4. Oportunidades de switching 5. Posicionamiento competitivo 6. Estrategia por molécula.`,
-    ejecutivo:`Eres director de inteligencia comercial farmacéutica. Genera reporte ejecutivo: 1. RESUMEN EJECUTIVO (5 puntos clave) 2. PERFORMANCE GENERAL 3. MERCADO Y COMPETENCIA 4. OPORTUNIDADES CRÍTICAS 5. RIESGOS Y ALERTAS 6. PLAN DE ACCIÓN (top 3 prioridades) 7. KPIs A MONITOREAR. Formato directo, orientado a decisiones.`
+    prescripciones: sysBase + `\nEres experto en prescripciones farmacéuticas. Analiza médicos, productos y tendencias de prescripción.`,
+    market_share: sysBase + `\nEres experto en market share farmacéutico. Analiza participación por laboratorio, molécula y período.`,
+    medicos: sysBase + `\nEres experto en segmentación médica. Analiza potencial prescriptor, especialidades y oportunidades de visita.`,
+    producto: sysBase + `\nEres experto en portafolio farmacéutico. Analiza desempeño por producto, presentación y tendencia.`,
+    molecula: sysBase + `\nEres experto en análisis terapéutico. Analiza competencia entre moléculas, adopción y switching.`,
+    ejecutivo: sysBase + `\nEres director de inteligencia comercial. Genera análisis ejecutivo con KPIs, mercado, oportunidades y plan de acción.`
   };
 
   async function runAnalysis(){
@@ -390,7 +409,7 @@
     btn.disabled=true; btn.textContent='⏳ Analizando...';
     const rc=document.getElementById('resultsCard');
     rc.classList.remove('hidden');
-    document.getElementById('resultContent').innerHTML=`<div class="loading"><div class="spinner"></div><div style="display:flex;flex-direction:column;gap:6px;text-align:center"><div class="lstep on" id="ls1">Procesando datos...</div><div class="lstep" id="ls2">Conectando con Claude...</div><div class="lstep" id="ls3">Generando análisis...</div></div></div>`;
+    document.getElementById('resultContent').innerHTML=`<div class="loading"><div class="spinner"></div><div style="display:flex;flex-direction:column;gap:6px;text-align:center"><div class="lstep on" id="ls1">Procesando datos...</div><div class="lstep" id="ls2">Conectando con Claude...</div><div class="lstep" id="ls3">Generando dashboard...</div></div></div>`;
     rc.scrollIntoView({behavior:'smooth',block:'start'});
     setTimeout(()=>{document.getElementById('ls1')?.classList.remove('on');document.getElementById('ls2')?.classList.add('on');},700);
     setTimeout(()=>{document.getElementById('ls2')?.classList.remove('on');document.getElementById('ls3')?.classList.add('on');},1600);
@@ -400,11 +419,11 @@
     if(activeTab==='img'&&imageData){
       messages=[{role:'user',content:[
         {type:'image',source:{type:'base64',media_type:imageMime,data:imageData}},
-        {type:'text',text:`Analiza esta captura de pantalla de Close-Up Analyzer.${custom?'\n\nInstrucción adicional: '+custom:''}`}
+        {type:'text',text:`Analiza esta captura de Close-Up Analyzer y devuelve el JSON.${custom?'\nNota: '+custom:''}`}
       ]}];
     } else {
       const preview=fileData.length>15000?fileData.substring(0,15000)+'\n...[truncado]':fileData;
-      messages=[{role:'user',content:`Datos de Close-Up Analyzer:\n\`\`\`\n${preview}\n\`\`\`\n${custom?'\nInstrucción: '+custom:''}`}];
+      messages=[{role:'user',content:`Datos de Close-Up Analyzer:\n\`\`\`\n${preview}\n\`\`\`\n${custom?'\nNota: '+custom:''}\nDevuelve solo el JSON.`}];
     }
 
     try {
@@ -415,8 +434,12 @@
       });
       if(!res.ok){const e=await res.json();throw new Error(e.error||'Error: '+res.status);}
       const data=await res.json();
-      document.getElementById('resultContent').innerHTML=renderMd(data.content[0]?.text||'Sin respuesta');
-      toast('Análisis generado ✓','ok');
+      const raw=data.content[0]?.text||'{}';
+      const clean=raw.replace(/```json|```/g,'').trim();
+      const d=JSON.parse(clean);
+      document.getElementById('resultContent').innerHTML=renderDashboard(d);
+      loadCharts(d);
+      toast('Dashboard generado ✓','ok');
     } catch(err){
       document.getElementById('resultContent').innerHTML=`<div style="color:var(--danger);padding:20px;background:var(--danger-light);border-radius:8px">❌ Error: ${err.message}<br><br><small style="color:var(--text2)">Verifica tu clave API e intenta nuevamente.</small></div>`;
       toast('Error al generar análisis','err');
@@ -424,19 +447,87 @@
     btn.disabled=false; btn.textContent='✨ Generar análisis'; updateBtn();
   }
 
-  function renderMd(t){
-    return t
-      .replace(/^### (.+)$/gm,'<h3>$1</h3>')
-      .replace(/^## (.+)$/gm,'<h2>$1</h2>')
-      .replace(/^# (.+)$/gm,'<h1>$1</h1>')
-      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-      .replace(/\*(.+?)\*/g,'<em>$1</em>')
-      .replace(/^---$/gm,'<hr>')
-      .replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>')
-      .replace(/^[-•] (.+)$/gm,'<li>$1</li>')
-      .replace(/(<li>.*?<\/li>)/gs,'<ul>$1</ul>')
-      .replace(/<\/ul>\s*<ul>/g,'')
-      .replace(/\n\n/g,'</p><p>');
+  function renderDashboard(d){
+    const trendIcon=t=>t==='up'?'↑':t==='down'?'↓':'→';
+    const trendColor=t=>t==='up'?'var(--success)':t==='down'?'var(--danger)':'var(--text2)';
+    return `
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+        ${(d.kpis||[]).map(k=>`
+          <div style="background:var(--bg2);border-radius:var(--radius);padding:14px">
+            <div style="font-size:12px;color:var(--text2);margin-bottom:4px">${k.label}</div>
+            <div style="font-size:18px;font-weight:600;color:var(--text)">${k.value}</div>
+            <div style="font-size:12px;color:${trendColor(k.trendType)};margin-top:2px">${trendIcon(k.trendType)} ${k.trend}</div>
+          </div>`).join('')}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:12px">${d.barChart?.title||'Ranking'}</div>
+          <div style="position:relative;width:100%;height:${Math.max(200,(d.barChart?.labels?.length||5)*32)}px">
+            <canvas id="dashBar" role="img" aria-label="Ranking por valor"></canvas>
+          </div>
+        </div>
+        <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:12px">${d.lineChart?.title||'Evolución'}</div>
+          <div style="position:relative;width:100%;height:200px">
+            <canvas id="dashLine" role="img" aria-label="Evolución temporal"></canvas>
+          </div>
+        </div>
+      </div>
+      <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px">${d.variacionChart?.title||'Variación neta'}</div>
+        <div style="position:relative;width:100%;height:140px">
+          <canvas id="dashVar" role="img" aria-label="Variación neta"></canvas>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div style="background:var(--success-light);border:1px solid #a7f3d0;border-radius:var(--radius);padding:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--success);margin-bottom:8px">Oportunidades</div>
+          ${(d.oportunidades||[]).map(o=>`<div style="font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.5">• ${o}</div>`).join('')}
+        </div>
+        <div style="background:var(--danger-light);border:1px solid #fecaca;border-radius:var(--radius);padding:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--danger);margin-bottom:8px">Alertas</div>
+          ${(d.alertas||[]).map(a=>`<div style="font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.5">• ${a}</div>`).join('')}
+        </div>
+        <div style="background:var(--accent2-light);border:1px solid #bfdbfe;border-radius:var(--radius);padding:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:8px">Recomendaciones</div>
+          ${(d.recomendaciones||[]).map(r=>`<div style="font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.5">• ${r}</div>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  function loadCharts(d){
+    if(!window.Chart){
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';
+      s.onload=()=>drawCharts(d);
+      document.head.appendChild(s);
+    } else drawCharts(d);
+  }
+
+  function drawCharts(d){
+    const tc='#4b5563', gc='rgba(0,0,0,0.06)';
+    if(d.barChart&&document.getElementById('dashBar')){
+      new Chart(document.getElementById('dashBar'),{
+        type:'bar',
+        data:{labels:d.barChart.labels,datasets:[{data:d.barChart.values,backgroundColor:d.barChart.colors||'#378ADD',borderRadius:4}]},
+        options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'}},y:{grid:{display:false},ticks:{color:tc,font:{size:11}}}}}
+      });
+    }
+    if(d.lineChart&&document.getElementById('dashLine')){
+      const colors=['#378ADD','#1D9E75','#D85A30','#8B5CF6','#F59E0B'];
+      new Chart(document.getElementById('dashLine'),{
+        type:'line',
+        data:{labels:d.lineChart.labels,datasets:(d.lineChart.series||[]).map((s,i)=>({label:s.name,data:s.data,borderColor:colors[i],backgroundColor:'transparent',tension:0.3,pointRadius:3,borderDash:i===1?[5,3]:[]}))},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:tc,font:{size:11},boxWidth:12}}},scales:{x:{grid:{color:gc},ticks:{color:tc}},y:{grid:{color:gc},ticks:{color:tc}}}}
+      });
+    }
+    if(d.variacionChart&&document.getElementById('dashVar')){
+      new Chart(document.getElementById('dashVar'),{
+        type:'bar',
+        data:{labels:d.variacionChart.labels,datasets:[{data:d.variacionChart.values,backgroundColor:d.variacionChart.values.map(v=>v>=0?'#1D9E75':'#D85A30'),borderRadius:4}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:tc,font:{size:11}}},y:{grid:{color:gc},ticks:{color:tc,callback:v=>v+' pp'}}}}
+      });
+    }
   }
 
   function copyResult(){navigator.clipboard.writeText(document.getElementById('resultContent').innerText).then(()=>toast('Copiado ✓','ok'));}
