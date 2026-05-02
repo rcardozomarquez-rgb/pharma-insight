@@ -1,27 +1,4 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pharma Insight — Análisis con IA</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<style>
-  :root {
-    --bg: #ffffff; --bg2: #f7f8fa; --bg3: #f0f2f5;
-    --border: #e2e6ed; --border2: #d0d5de;
-    --accent: #0a6e5c; --accent-light: #e6f4f1;
-    --accent2: #1a56db; --accent3: #b45309; --accent3-light: #fef3e2;
-    --text: #111827; --text2: #4b5563; --text3: #9ca3af;
-    --danger: #dc2626; --danger-light: #fef2f2;
-    --success: #059669; --success-light: #ecfdf5;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-    --shadow: 0 4px 16px rgba(0,0,0,0.08);
-    --font-display: 'Playfair Display', serif;
-    --font-body: 'Plus Jakarta Sans', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
-    --radius: 10px; --radius-lg: 16px;
-  }
+
   * { margin:0; padding:0; box-sizing:border-box; }
   body { background:var(--bg2); color:var(--text); font-family:var(--font-body); font-size:15px; min-height:100vh; }
   .app { display:flex; flex-direction:column; min-height:100vh; }
@@ -408,17 +385,12 @@
     }
 
     try {
-      const res=await fetch('https://api.anthropic.com/v1/messages',{
+      const res=await fetch('https://pharma-backend-wziv.onrender.com/analyze',{
         method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'x-api-key':apiKey,
-          'anthropic-version':'2023-06-01',
-          'anthropic-dangerous-direct-browser-calls':'true'
-        },
-        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,system:sysPrompts[selectedType],messages})
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({apiKey,system:sysPrompts[selectedType],messages})
       });
-      if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Error de API');}
+      if(!res.ok){const e=await res.json();throw new Error(e.error||'Error: '+res.status);}
       const data=await res.json();
       document.getElementById('resultContent').innerHTML=renderMd(data.content[0]?.text||'Sin respuesta');
       toast('Análisis generado ✓','ok');
