@@ -255,6 +255,7 @@
         <div class="a-card" onclick="selectA(this,'producto')"><div class="a-check">✓</div><div class="a-emoji">💊</div><div class="a-name">Por producto</div><div class="a-desc">Desempeño por producto y presentación.</div></div>
         <div class="a-card" onclick="selectA(this,'molecula')"><div class="a-check">✓</div><div class="a-emoji">🧬</div><div class="a-name">Por molécula</div><div class="a-desc">Comparativa entre moléculas competidoras.</div></div>
         <div class="a-card" onclick="selectA(this,'ejecutivo')"><div class="a-check">✓</div><div class="a-emoji">📋</div><div class="a-name">Reporte ejecutivo</div><div class="a-desc">Resumen gerencial con hallazgos y recomendaciones.</div></div>
+        <div class="a-card" onclick="selectA(this,'comparacion360');switchTab('compare')" style="border-color:#1a56db;background:#ebf0fd"><div class="a-check" style="background:#1a56db">✓</div><div class="a-emoji">🔄</div><div class="a-name" style="color:#1a56db">Comparación 360°</div><div class="a-desc">Prescripciones vs Ventas cruzadas por laboratorio.</div></div>
       </div>
     </div>
 
@@ -390,7 +391,7 @@
     updateBtn();
   }
 
-  const typeNames={prescripciones:'Prescripciones',market_share:'Market Share',medicos:'Médicos',producto:'Por producto',molecula:'Por molécula',ejecutivo:'Reporte ejecutivo'};
+  const typeNames={prescripciones:'Prescripciones',market_share:'Market Share',medicos:'Médicos',producto:'Por producto',molecula:'Por molécula',ejecutivo:'Reporte ejecutivo',comparacion360:'Comparación 360°'};
   function selectA(el,type){
     document.querySelectorAll('.a-card').forEach(c=>c.classList.remove('selected'));
     el.classList.add('selected'); selectedType=type;
@@ -480,7 +481,8 @@ Para colors en barChart usa "#1D9E75" para crecimiento y "#D85A30" para declive.
     medicos: sysBase + `\nEres experto en segmentación médica. Analiza potencial prescriptor, especialidades y oportunidades de visita.`,
     producto: sysBase + `\nEres experto en portafolio farmacéutico. Analiza desempeño por producto, presentación y tendencia.`,
     molecula: sysBase + `\nEres experto en análisis terapéutico. Analiza competencia entre moléculas, adopción y switching.`,
-    ejecutivo: sysBase + `\nEres director de inteligencia comercial. Genera análisis ejecutivo con KPIs, mercado, oportunidades y plan de acción.`
+    ejecutivo: sysBase + `\nEres director de inteligencia comercial. Genera análisis ejecutivo con KPIs, mercado, oportunidades y plan de acción.`,
+    comparacion360: sysBase + `\nEres experto en análisis farmacéutico 360°. Compara prescripciones vs ventas por laboratorio. El archivo de prescripciones es el principal — identifica sus laboratorios y cruza con ventas. Detecta gaps: laboratorios con alta prescripción pero bajas ventas (oportunidad) y viceversa (riesgo). Genera insights accionables.`
   };
 
   async function runAnalysis(){
