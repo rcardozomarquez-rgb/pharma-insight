@@ -216,7 +216,7 @@
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div>
-            <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px;font-family:var(--font-mono);text-transform:uppercase">Archivo A — Período 1</div>
+            <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px;font-family:var(--font-mono);text-transform:uppercase">💉 Archivo A — Prescripciones (base)</div>
             <div class="drop-zone" id="dropZoneA" style="padding:24px 16px">
               <input type="file" id="fileInputA" accept=".csv,.xlsx,.xls,.txt,image/*" onchange="handleCompareFile(event,'A')" />
               <div class="drop-icon" style="font-size:24px">📂</div>
@@ -229,7 +229,7 @@
             </div>
           </div>
           <div>
-            <div style="font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:8px;font-family:var(--font-mono);text-transform:uppercase">Archivo B — Período 2</div>
+            <div style="font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:8px;font-family:var(--font-mono);text-transform:uppercase">💰 Archivo B — Ventas</div>
             <div class="drop-zone" id="dropZoneB" style="padding:24px 16px">
               <input type="file" id="fileInputB" accept=".csv,.xlsx,.xls,.txt,image/*" onchange="handleCompareFile(event,'B')" />
               <div class="drop-icon" style="font-size:24px">📂</div>
@@ -255,7 +255,7 @@
         <div class="a-card" onclick="selectA(this,'producto')"><div class="a-check">✓</div><div class="a-emoji">💊</div><div class="a-name">Por producto</div><div class="a-desc">Desempeño por producto y presentación.</div></div>
         <div class="a-card" onclick="selectA(this,'molecula')"><div class="a-check">✓</div><div class="a-emoji">🧬</div><div class="a-name">Por molécula</div><div class="a-desc">Comparativa entre moléculas competidoras.</div></div>
         <div class="a-card" onclick="selectA(this,'ejecutivo')"><div class="a-check">✓</div><div class="a-emoji">📋</div><div class="a-name">Reporte ejecutivo</div><div class="a-desc">Resumen gerencial con hallazgos y recomendaciones.</div></div>
-        <div class="a-card" onclick="selectA(this,'comparacion360');switchTab('compare')" style="border-color:#1a56db;background:#ebf0fd"><div class="a-check" style="background:#1a56db">✓</div><div class="a-emoji">🔄</div><div class="a-name" style="color:#1a56db">Comparación 360°</div><div class="a-desc">Prescripciones vs Ventas cruzadas por laboratorio.</div></div>
+        <div class="a-card" onclick="selectA(this,'comparacion360');switchTab('compare')" style="border-color:#1a56db;background:#ebf0fd"><div class="a-check" style="background:#1a56db">✓</div><div class="a-emoji">🔄</div><div class="a-name" style="color:#1a56db">Comparación 360°</div><div class="a-desc">Sube Archivo A (prescripciones) y Archivo B (ventas) arriba.</div></div>
       </div>
     </div>
 
@@ -434,6 +434,8 @@
     document.getElementById('loaded'+slot).classList.remove('hidden');
     document.getElementById('icon'+slot).textContent=icon;
     document.getElementById('name'+slot).textContent=file.name;
+    const a=compareA.name||'—'; const b=compareB.name||'—';
+    document.getElementById('infoData').textContent=compareA.name&&compareB.name?a+' vs '+b:(compareA.name||compareB.name||'ninguno cargado');
     updateBtn();
   }
 
