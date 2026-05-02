@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pharma Insight — Análisis con IA</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #ffffff; --bg2: #f7f8fa; --bg3: #f0f2f5;
+    --border: #e2e6ed; --border2: #d0d5de;
+    --accent: #0a6e5c; --accent-light: #e6f4f1;
+    --accent2: #1a56db; --accent3: #b45309; --accent3-light: #fef3e2;
+    --text: #111827; --text2: #4b5563; --text3: #9ca3af;
+    --danger: #dc2626; --danger-light: #fef2f2;
+    --success: #059669; --success-light: #ecfdf5;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow: 0 4px 16px rgba(0,0,0,0.08);
+    --font-display: 'Playfair Display', serif;
+    --font-body: 'Plus Jakarta Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 10px; --radius-lg: 16px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg2); color:var(--text); font-family:var(--font-body); font-size:15px; min-height:100vh; }
+  .app { display:flex; flex-direction:column; min-height:100vh; }
+  header { background:#fff; border-bottom:1px solid var(--border); padding:0 40px; height:64px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; box-shadow:var(--shadow-sm); }
+  .logo { display:flex; align-items:center; gap:12px; }
+  .logo-mark { width:38px; height:38px; background:linear-gradient(135deg,var(--accent),#0d9276); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow:0 2px 8px rgba(10,110,92,.3); }
+  .logo-name { font-family:var(--font-display); font-size:20px; }
+  .logo-name span { color:var(--accent); }
+  .logo-tag { font-size:10px; color:var(--text3); font-family:var(--font-mono); text-transform:uppercase; letter-spacing:.08em; }
+  .status-pill { display:flex; align-items:center; gap:6px; padding:5px 12px; background:var(--success-light); border:1px solid #a7f3d0; border-radius:20px; font-size:12px; color:var(--success); font-family:var(--font-mono); }
+  .status-dot { width:6px; height:6px; background:var(--success); border-radius:50%; animation:blink 2s infinite; }
+  @keyframes blink { 0%,100%{opacity:1}50%{opacity:.4} }
+  main { flex:1; max-width:960px; margin:0 auto; width:100%; padding:36px 24px 60px; }
+  .page-title { font-family:var(--font-display); font-size:32px; line-height:1.2; letter-spacing:-.5px; margin-bottom:6px; }
+  .page-title em { font-style:italic; color:var(--accent); }
+  .page-sub { font-size:14px; color:var(--text2); line-height:1.6; margin-bottom:32px; }
+  .card { background:#fff; border:1px solid var(--border); border-radius:var(--radius-lg); padding:28px; margin-bottom:20px; box-shadow:var(--shadow-sm); }
+  .card-title { font-size:11px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.1em; font-family:var(--font-mono); margin-bottom:20px; display:flex; align-items:center; gap:10px; }
+  .card-title .step { width:22px; height:22px; background:var(--accent); color:#fff; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; }
+  .card-title::after { content:''; flex:1; height:1px; background:var(--border); }
+  .api-row { display:flex; align-items:flex-start; gap:16px; }
+  .api-icon-box { width:46px; height:46px; background:var(--accent3-light); border:1px solid #fde68a; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; margin-top:4px; }
+  .api-fields { flex:1; }
+  .api-label { font-size:13px; font-weight:600; margin-bottom:4px; }
+  .api-hint { font-size:12px; color:var(--text2); margin-bottom:10px; }
+  .api-hint a { color:var(--accent2); text-decoration:none; }
+  .input-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  input[type="password"], input[type="text"] { flex:1; min-width:200px; height:40px; padding:0 14px; border:1.5px solid var(--border); border-radius:var(--radius); font-family:var(--font-mono); font-size:13px; color:var(--text); background:var(--bg2); outline:none; transition:border-color .2s,box-shadow .2s; }
+  input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(10,110,92,.1); background:#fff; }
+  input::placeholder { color:var(--text3); }
+  .btn { height:40px; padding:0 18px; border-radius:var(--radius); border:none; cursor:pointer; font-family:var(--font-body); font-size:13px; font-weight:600; transition:all .15s; white-space:nowrap; }
+  .btn-green { background:var(--accent); color:#fff; }
+  .btn-green:hover { background:#085f4f; box-shadow:0 2px 8px rgba(10,110,92,.3); }
+  .btn-ghost { background:var(--bg2); color:var(--text2); border:1.5px solid var(--border); }
+  .btn-ghost:hover { border-color:var(--border2); color:var(--text); }
+  .btn-primary { height:48px; padding:0 32px; background:var(--accent); color:#fff; font-size:15px; border-radius:12px; box-shadow:0 2px 8px rgba(10,110,92,.25); }
+  .btn-primary:hover { background:#085f4f; box-shadow:0 4px 16px rgba(10,110,92,.3); transform:translateY(-1px); }
+  .btn-primary:disabled { background:var(--bg3); color:var(--text3); box-shadow:none; transform:none; cursor:not-allowed; }
+  .api-status { font-size:12px; font-family:var(--font-mono); }
+  .ok { color:var(--success); } .err { color:var(--danger); }
+  .upload-tabs { display:flex; border:1.5px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:20px; background:var(--bg2); }
+  .upload-tab { flex:1; padding:10px 16px; border:none; background:transparent; cursor:pointer; font-family:var(--font-body); font-size:13px; font-weight:500; color:var(--text2); transition:all .15s; display:flex; align-items:center; justify-content:center; gap:7px; }
+  .upload-tab:first-child { border-right:1.5px solid var(--border); }
+  .upload-tab.active { background:#fff; color:var(--accent); font-weight:600; }
+  .drop-zone { border:2px dashed var(--border2); border-radius:var(--radius); padding:40px 24px; text-align:center; cursor:pointer; transition:all .2s; position:relative; background:var(--bg2); }
+  .drop-zone:hover,.drop-zone.over { border-color:var(--accent); background:var(--accent-light); }
+  .drop-zone input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+  .drop-icon { font-size:32px; margin-bottom:10px; }
+  .drop-title { font-size:15px; font-weight:600; margin-bottom:4px; }
+  .drop-sub { font-size:13px; color:var(--text2); }
+  .file-tags { display:flex; gap:6px; justify-content:center; margin-top:12px; flex-wrap:wrap; }
+  .ftag { padding:2px 9px; background:#fff; border:1px solid var(--border); border-radius:5px; font-size:11px; color:var(--text2); font-family:var(--font-mono); }
+  .file-loaded { display:flex; align-items:center; gap:14px; padding:14px 18px; background:var(--success-light); border:1.5px solid #a7f3d0; border-radius:var(--radius); margin-top:12px; }
+  .file-loaded-name { font-weight:600; font-size:14px; }
+  .file-loaded-meta { font-size:12px; color:var(--success); margin-top:2px; }
+  .img-preview-wrap { position:relative; border-radius:var(--radius); overflow:hidden; border:1.5px solid var(--border); background:var(--bg2); }
+  .img-preview-wrap img { width:100%; max-height:280px; object-fit:contain; display:block; background:#fff; }
+  .img-overlay { position:absolute; top:10px; right:10px; }
+  .analysis-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .a-card { border:1.5px solid var(--border); border-radius:var(--radius); padding:16px; cursor:pointer; transition:all .15s; background:var(--bg2); position:relative; }
+  .a-card:hover { border-color:var(--accent); background:var(--accent-light); transform:translateY(-1px); }
+  .a-card.selected { border-color:var(--accent); background:var(--accent-light); box-shadow:0 0 0 2px rgba(10,110,92,.15); }
+  .a-check { position:absolute; top:10px; right:10px; width:18px; height:18px; background:var(--accent); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; color:#fff; opacity:0; transition:opacity .15s; }
+  .a-card.selected .a-check { opacity:1; }
+  .a-emoji { font-size:22px; margin-bottom:8px; }
+  .a-name { font-size:13px; font-weight:700; margin-bottom:3px; }
+  .a-desc { font-size:11px; color:var(--text2); line-height:1.5; }
+  .a-card.selected .a-desc { color:var(--accent); }
+  textarea { width:100%; min-height:80px; padding:12px 14px; border:1.5px solid var(--border); border-radius:var(--radius); font-family:var(--font-body); font-size:14px; color:var(--text); background:var(--bg2); resize:vertical; outline:none; transition:border-color .2s; line-height:1.6; }
+  textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(10,110,92,.1); background:#fff; }
+  textarea::placeholder { color:var(--text3); }
+  .chips { display:flex; flex-wrap:wrap; gap:7px; margin-top:12px; }
+  .chip { padding:4px 12px; background:#fff; border:1.5px solid var(--border); border-radius:20px; font-size:12px; color:var(--text2); cursor:pointer; transition:all .15s; font-weight:500; }
+  .chip:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-light); }
+  .action-bar { background:#fff; border:1px solid var(--border); border-radius:var(--radius-lg); padding:18px 24px; display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; box-shadow:var(--shadow-sm); }
+  .action-info { font-size:13px; color:var(--text2); line-height:1.8; }
+  .action-info strong { color:var(--text); font-weight:600; }
+  .results-card { background:#fff; border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow); overflow:hidden; animation:fadeUp .3s ease; margin-bottom:40px; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)} }
+  .results-header { padding:20px 28px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; background:var(--bg2); }
+  .results-title { font-family:var(--font-display); font-size:20px; }
+  .results-actions { display:flex; gap:8px; }
+  .results-body { padding:28px; }
+  .md-out { font-size:15px; line-height:1.8; color:var(--text2); }
+  .md-out h1 { font-family:var(--font-display); font-size:26px; color:var(--text); margin:0 0 16px; }
+  .md-out h2 { font-family:var(--font-display); font-size:20px; color:var(--accent); margin:24px 0 10px; padding-left:12px; border-left:3px solid var(--accent); }
+  .md-out h3 { font-size:15px; font-weight:700; color:var(--text); margin:18px 0 8px; }
+  .md-out p { margin-bottom:12px; }
+  .md-out strong { color:var(--text); font-weight:700; }
+  .md-out ul,.md-out ol { margin:8px 0 14px 20px; }
+  .md-out li { margin-bottom:6px; }
+  .md-out hr { border:none; border-top:1px solid var(--border); margin:20px 0; }
+  .md-out blockquote { border-left:3px solid var(--accent3); padding:10px 14px; margin:14px 0; background:var(--accent3-light); border-radius:0 8px 8px 0; color:var(--accent3); }
+  .md-out table { width:100%; border-collapse:collapse; margin:16px 0; font-size:13px; border-radius:8px; overflow:hidden; border:1px solid var(--border); }
+  .md-out th { background:var(--bg2); padding:10px 14px; text-align:left; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); font-size:12px; font-family:var(--font-mono); }
+  .md-out td { padding:10px 14px; border-bottom:1px solid var(--border); color:var(--text2); }
+  .md-out tr:last-child td { border-bottom:none; }
+  .md-out tr:hover td { background:var(--bg2); }
+  .loading { display:flex; flex-direction:column; align-items:center; padding:56px 24px; gap:16px; }
+  .spinner { width:48px; height:48px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .lstep { font-size:12px; color:var(--text3); transition:color .3s; font-family:var(--font-mono); }
+  .lstep.on { color:var(--accent); font-weight:600; }
+  .hidden { display:none !important; }
+  .toast { position:fixed; bottom:24px; right:24px; padding:12px 20px; border-radius:var(--radius); font-size:13px; font-weight:600; z-index:999; display:none; box-shadow:var(--shadow); }
+  .toast.ok { background:var(--success-light); border:1px solid #a7f3d0; color:var(--success); }
+  .toast.err { background:var(--danger-light); border:1px solid #fecaca; color:var(--danger); }
+  @media(max-width:700px){ header{padding:0 16px} main{padding:20px 14px 40px} .analysis-grid{grid-template-columns:1fr 1fr} .page-title{font-size:24px} .action-bar{flex-direction:column;gap:12px} }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">
+      <div class="logo-mark">💊</div>
+      <div>
+        <div class="logo-name">Pharma<span>Insight</span></div>
+        <div class="logo-tag">Close-Up Analyzer · IA</div>
+      </div>
+    </div>
+    <div class="status-pill"><div class="status-dot"></div>Claude activo</div>
+  </header>
+
+  <main>
+    <div class="page-title">Análisis <em>inteligente</em><br>de datos farmacéuticos</div>
+    <div class="page-sub">Carga tu reporte de Close-Up — Excel, CSV o captura de pantalla — y obtén análisis en segundos.</div>
+
+    <!-- Step 1: API Key -->
+    <div class="card">
+      <div class="card-title"><span class="step">1</span> Configuración API</div>
+      <div class="api-row">
+        <div class="api-icon-box">🔑</div>
+        <div class="api-fields">
+          <div class="api-label">Clave API de Anthropic</div>
+          <div class="api-hint">Obtén la tuya en <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></div>
+          <div class="input-row">
+            <input type="password" id="apiKey" placeholder="sk-ant-api03-..." />
+            <button class="btn btn-green" onclick="saveKey()">Guardar</button>
+            <span id="keyStatus" class="api-status"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Upload -->
+    <div class="card">
+      <div class="card-title"><span class="step">2</span> Cargar datos</div>
+      <div class="upload-tabs">
+        <button class="upload-tab active" id="tabFile" onclick="switchTab('file')">📂 Archivo Excel / CSV</button>
+        <button class="upload-tab" id="tabImg" onclick="switchTab('img')">🖼️ Imagen / Captura de pantalla</button>
+      </div>
+      <!-- File panel -->
+      <div id="panelFile">
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="fileInput" accept=".csv,.xlsx,.xls,.txt" onchange="handleFile(event)" />
+          <div class="drop-icon">📂</div>
+          <div class="drop-title">Arrastra tu archivo aquí o haz clic</div>
+          <div class="drop-sub">Exportaciones de Close-Up Analyzer</div>
+          <div class="file-tags"><span class="ftag">.CSV</span><span class="ftag">.XLSX</span><span class="ftag">.XLS</span><span class="ftag">.TXT</span></div>
+        </div>
+        <div id="fileLoaded" class="file-loaded hidden">
+          <div style="font-size:28px">📄</div>
+          <div style="flex:1">
+            <div class="file-loaded-name" id="fName"></div>
+            <div class="file-loaded-meta" id="fMeta"></div>
+          </div>
+          <button class="btn btn-ghost" onclick="clearFile()">✕ Quitar</button>
+        </div>
+      </div>
+      <!-- Image panel -->
+      <div id="panelImg" class="hidden">
+        <div class="drop-zone" id="dropZoneImg">
+          <input type="file" id="imgInput" accept="image/*" onchange="handleImage(event)" />
+          <div class="drop-icon">🖼️</div>
+          <div class="drop-title">Arrastra tu captura de pantalla aquí o haz clic</div>
+          <div class="drop-sub">Cualquier vista de Close-Up Analyzer</div>
+          <div class="file-tags"><span class="ftag">.PNG</span><span class="ftag">.JPG</span><span class="ftag">.JPEG</span><span class="ftag">.WEBP</span></div>
+        </div>
+        <div id="imgLoaded" class="hidden" style="margin-top:12px">
+          <div class="img-preview-wrap">
+            <img id="imgPreview" src="" alt="Preview" />
+            <div class="img-overlay">
+              <button class="btn btn-ghost" style="background:#fff;font-size:12px;height:34px" onclick="clearImage()">✕ Quitar</button>
+            </div>
+          </div>
+          <div class="file-loaded" style="margin-top:8px">
+            <div style="font-size:24px">🖼️</div>
+            <div style="flex:1">
+              <div class="file-loaded-name" id="imgName"></div>
+              <div class="file-loaded-meta">Imagen lista para analizar</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Analysis type -->
+    <div class="card">
+      <div class="card-title"><span class="step">3</span> Tipo de análisis</div>
+      <div class="analysis-grid">
+        <div class="a-card" onclick="selectA(this,'prescripciones')"><div class="a-check">✓</div><div class="a-emoji">💉</div><div class="a-name">Prescripciones</div><div class="a-desc">Tendencias por médico, especialidad y producto.</div></div>
+        <div class="a-card" onclick="selectA(this,'market_share')"><div class="a-check">✓</div><div class="a-emoji">📊</div><div class="a-name">Market Share</div><div class="a-desc">Participación por molécula, laboratorio y región.</div></div>
+        <div class="a-card" onclick="selectA(this,'medicos')"><div class="a-check">✓</div><div class="a-emoji">👨‍⚕️</div><div class="a-name">Médicos</div><div class="a-desc">Perfil prescriptor y segmentación.</div></div>
+        <div class="a-card" onclick="selectA(this,'producto')"><div class="a-check">✓</div><div class="a-emoji">💊</div><div class="a-name">Por producto</div><div class="a-desc">Desempeño por producto y presentación.</div></div>
+        <div class="a-card" onclick="selectA(this,'molecula')"><div class="a-check">✓</div><div class="a-emoji">🧬</div><div class="a-name">Por molécula</div><div class="a-desc">Comparativa entre moléculas competidoras.</div></div>
+        <div class="a-card" onclick="selectA(this,'ejecutivo')"><div class="a-check">✓</div><div class="a-emoji">📋</div><div class="a-name">Reporte ejecutivo</div><div class="a-desc">Resumen gerencial con hallazgos y recomendaciones.</div></div>
+      </div>
+    </div>
+
+    <!-- Step 4: Custom prompt -->
+    <div class="card">
+      <div class="card-title"><span class="step">4</span> Instrucción adicional <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3);font-family:var(--font-body)">(opcional)</span></div>
+      <textarea id="customPrompt" placeholder="Ej: Enfócate en los médicos con más de 50 prescripciones, compara vs período anterior..."></textarea>
+      <div class="chips">
+        <span class="chip" onclick="addChip('Identifica los 10 médicos con mayor potencial prescriptor')">🏆 Top médicos</span>
+        <span class="chip" onclick="addChip('Moléculas con mayor crecimiento en el último trimestre')">📈 Moléculas en crecimiento</span>
+        <span class="chip" onclick="addChip('Genera un análisis FODA basado en los datos')">🔍 Análisis FODA</span>
+        <span class="chip" onclick="addChip('Identifica oportunidades de mercado no aprovechadas')">💡 Oportunidades</span>
+        <span class="chip" onclick="addChip('¿Qué médicos prescriben la competencia y no nuestros productos?')">🎯 Médicos de competencia</span>
+      </div>
+    </div>
+
+    <!-- Action bar -->
+    <div class="action-bar">
+      <div class="action-info">
+        Datos: <strong id="infoData">ninguno cargado</strong><br>
+        Análisis: <strong id="infoType">ninguno seleccionado</strong>
+      </div>
+      <button class="btn btn-primary" id="runBtn" onclick="runAnalysis()" disabled>✨ Generar análisis</button>
+    </div>
+
+    <!-- Results -->
+    <div id="resultsCard" class="results-card hidden">
+      <div class="results-header">
+        <div class="results-title">Resultados del análisis</div>
+        <div class="results-actions">
+          <button class="btn btn-ghost" style="height:36px;font-size:12px" onclick="copyResult()">📋 Copiar</button>
+          <button class="btn btn-ghost" style="height:36px;font-size:12px" onclick="downloadResult()">⬇ Descargar</button>
+        </div>
+      </div>
+      <div class="results-body"><div id="resultContent" class="md-out"></div></div>
+    </div>
+  </main>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+  let apiKey='', fileData=null, imageData=null, imageMime='', fileName='', selectedType='', activeTab='file';
+
+  // Drag & drop
+  const dz=document.getElementById('dropZone');
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over')});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');processFile(e.dataTransfer.files[0])});
+  const dzi=document.getElementById('dropZoneImg');
+  dzi.addEventListener('dragover',e=>{e.preventDefault();dzi.classList.add('over')});
+  dzi.addEventListener('dragleave',()=>dzi.classList.remove('over'));
+  dzi.addEventListener('drop',e=>{e.preventDefault();dzi.classList.remove('over');processImage(e.dataTransfer.files[0])});
+
+  function switchTab(t){
+    activeTab=t;
+    document.getElementById('tabFile').classList.toggle('active',t==='file');
+    document.getElementById('tabImg').classList.toggle('active',t==='img');
+    document.getElementById('panelFile').classList.toggle('hidden',t!=='file');
+    document.getElementById('panelImg').classList.toggle('hidden',t!=='img');
+    updateBtn();
+  }
+
+  function saveKey(){
+    const v=document.getElementById('apiKey').value.trim();
+    const s=document.getElementById('keyStatus');
+    if(!v.startsWith('sk-ant')){s.innerHTML='<span class="err">❌ Inválida</span>';return;}
+    apiKey=v; s.innerHTML='<span class="ok">✓ Guardada</span>'; updateBtn();
+  }
+
+  function handleFile(e){processFile(e.target.files[0]);}
+  function processFile(file){
+    if(!file)return;
+    const ext=file.name.split('.').pop().toLowerCase();
+    const reader=new FileReader();
+    if(ext==='csv'||ext==='txt'){
+      reader.onload=e=>{fileData=e.target.result;showFileLoaded(file);};
+      reader.readAsText(file,'UTF-8');
+    } else if(['xlsx','xls'].includes(ext)){
+      reader.onload=e=>{
+        const wb=XLSX.read(e.target.result,{type:'binary'});
+        fileData=XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]);
+        showFileLoaded(file);
+      };
+      reader.readAsBinaryString(file);
+    } else {toast('Formato no soportado','err');}
+  }
+
+  function showFileLoaded(file){
+    fileName=file.name;
+    document.getElementById('dropZone').style.display='none';
+    document.getElementById('fileLoaded').classList.remove('hidden');
+    document.getElementById('fName').textContent=file.name;
+    document.getElementById('fMeta').textContent=fmtSize(file.size)+' · Listo';
+    document.getElementById('infoData').textContent=file.name;
+    updateBtn();
+  }
+
+  function clearFile(){
+    fileData=null;fileName='';
+    document.getElementById('dropZone').style.display='';
+    document.getElementById('fileLoaded').classList.add('hidden');
+    document.getElementById('fileInput').value='';
+    document.getElementById('infoData').textContent='ninguno cargado';
+    updateBtn();
+  }
+
+  function handleImage(e){processImage(e.target.files[0]);}
+  function processImage(file){
+    if(!file||!file.type.startsWith('image/'))return;
+    imageMime=file.type; fileName=file.name;
+    const reader=new FileReader();
+    reader.onload=e=>{
+      imageData=e.target.result.split(',')[1];
+      document.getElementById('dropZoneImg').style.display='none';
+      document.getElementById('imgLoaded').classList.remove('hidden');
+      document.getElementById('imgPreview').src=e.target.result;
+      document.getElementById('imgName').textContent=file.name;
+      document.getElementById('infoData').textContent=file.name+' (imagen)';
+      updateBtn();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearImage(){
+    imageData=null;imageMime='';fileName='';
+    document.getElementById('dropZoneImg').style.display='';
+    document.getElementById('imgLoaded').classList.add('hidden');
+    document.getElementById('imgInput').value='';
+    document.getElementById('infoData').textContent='ninguno cargado';
+    updateBtn();
+  }
+
+  const typeNames={prescripciones:'Prescripciones',market_share:'Market Share',medicos:'Médicos',producto:'Por producto',molecula:'Por molécula',ejecutivo:'Reporte ejecutivo'};
+  function selectA(el,type){
+    document.querySelectorAll('.a-card').forEach(c=>c.classList.remove('selected'));
+    el.classList.add('selected'); selectedType=type;
+    document.getElementById('infoType').textContent=typeNames[type];
+    updateBtn();
+  }
+
+  function updateBtn(){
+    const hasData=activeTab==='file'?!!fileData:!!imageData;
+    document.getElementById('runBtn').disabled=!(hasData&&selectedType&&apiKey);
+  }
+
+  function addChip(t){const ta=document.getElementById('customPrompt');ta.value=(ta.value?ta.value+' ':'')+t;ta.focus();}
+
+  const sysPrompts={
+    prescripciones:`Eres un experto en análisis de prescripciones médicas farmacéuticas con datos de Close-Up Analyzer. Analiza los datos y proporciona: 1. Resumen ejecutivo con métricas clave 2. Tendencias por período 3. Top médicos prescriptores 4. Productos más prescritos 5. Oportunidades y alertas 6. Recomendaciones estratégicas. Usa tablas cuando sea útil.`,
+    market_share:`Eres un experto en participación de mercado farmacéutico. Analiza y proporciona: 1. Market share actual vs períodos anteriores 2. Ranking de laboratorios y productos 3. Análisis por molécula 4. Ganadores y perdedores 5. Oportunidades para incrementar participación 6. Recomendaciones. Usa ↑↓ para variaciones.`,
+    medicos:`Eres experto en segmentación de médicos prescriptores. Analiza y proporciona: 1. Segmentación por potencial (A/B/C) 2. Top médicos por especialidad 3. Médicos de alto valor no trabajados 4. Perfil de médico ideal 5. Estrategia de visita médica recomendada 6. Priorización de cartera.`,
+    producto:`Eres experto en portafolio farmacéutico. Analiza y proporciona: 1. Ranking por volumen y valor 2. Evolución por período 3. Análisis por presentación 4. Productos estrella vs en declive 5. Oportunidades de portafolio 6. Recomendaciones comerciales por producto.`,
+    molecula:`Eres experto en análisis terapéutico. Analiza y proporciona: 1. Comparativa de moléculas en mismo segmento 2. Share por molécula 3. Tendencias de adopción 4. Oportunidades de switching 5. Posicionamiento competitivo 6. Estrategia por molécula.`,
+    ejecutivo:`Eres director de inteligencia comercial farmacéutica. Genera reporte ejecutivo: 1. RESUMEN EJECUTIVO (5 puntos clave) 2. PERFORMANCE GENERAL 3. MERCADO Y COMPETENCIA 4. OPORTUNIDADES CRÍTICAS 5. RIESGOS Y ALERTAS 6. PLAN DE ACCIÓN (top 3 prioridades) 7. KPIs A MONITOREAR. Formato directo, orientado a decisiones.`
+  };
+
+  async function runAnalysis(){
+    const btn=document.getElementById('runBtn');
+    btn.disabled=true; btn.textContent='⏳ Analizando...';
+    const rc=document.getElementById('resultsCard');
+    rc.classList.remove('hidden');
+    document.getElementById('resultContent').innerHTML=`<div class="loading"><div class="spinner"></div><div style="display:flex;flex-direction:column;gap:6px;text-align:center"><div class="lstep on" id="ls1">Procesando datos...</div><div class="lstep" id="ls2">Conectando con Claude...</div><div class="lstep" id="ls3">Generando análisis...</div></div></div>`;
+    rc.scrollIntoView({behavior:'smooth',block:'start'});
+    setTimeout(()=>{document.getElementById('ls1')?.classList.remove('on');document.getElementById('ls2')?.classList.add('on');},700);
+    setTimeout(()=>{document.getElementById('ls2')?.classList.remove('on');document.getElementById('ls3')?.classList.add('on');},1600);
+
+    const custom=document.getElementById('customPrompt').value.trim();
+    let messages;
+    if(activeTab==='img'&&imageData){
+      messages=[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:imageMime,data:imageData}},
+        {type:'text',text:`Analiza esta captura de pantalla de Close-Up Analyzer.${custom?'\n\nInstrucción adicional: '+custom:''}`}
+      ]}];
+    } else {
+      const preview=fileData.length>15000?fileData.substring(0,15000)+'\n...[truncado]':fileData;
+      messages=[{role:'user',content:`Datos de Close-Up Analyzer:\n\`\`\`\n${preview}\n\`\`\`\n${custom?'\nInstrucción: '+custom:''}`}];
+    }
+
+    try {
+      const res=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'x-api-key':apiKey,
+          'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-calls':'true'
+        },
+        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,system:sysPrompts[selectedType],messages})
+      });
+      if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Error de API');}
+      const data=await res.json();
+      document.getElementById('resultContent').innerHTML=renderMd(data.content[0]?.text||'Sin respuesta');
+      toast('Análisis generado ✓','ok');
+    } catch(err){
+      document.getElementById('resultContent').innerHTML=`<div style="color:var(--danger);padding:20px;background:var(--danger-light);border-radius:8px">❌ Error: ${err.message}<br><br><small style="color:var(--text2)">Verifica tu clave API e intenta nuevamente.</small></div>`;
+      toast('Error al generar análisis','err');
+    }
+    btn.disabled=false; btn.textContent='✨ Generar análisis'; updateBtn();
+  }
+
+  function renderMd(t){
+    return t
+      .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+      .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+      .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g,'<em>$1</em>')
+      .replace(/^---$/gm,'<hr>')
+      .replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>')
+      .replace(/^[-•] (.+)$/gm,'<li>$1</li>')
+      .replace(/(<li>.*?<\/li>)/gs,'<ul>$1</ul>')
+      .replace(/<\/ul>\s*<ul>/g,'')
+      .replace(/\n\n/g,'</p><p>');
+  }
+
+  function copyResult(){navigator.clipboard.writeText(document.getElementById('resultContent').innerText).then(()=>toast('Copiado ✓','ok'));}
+  function downloadResult(){
+    const blob=new Blob([document.getElementById('resultContent').innerText],{type:'text/plain;charset=utf-8'});
+    const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:`pharma-insight-${selectedType}-${new Date().toISOString().split('T')[0]}.txt`});
+    a.click();toast('Descargado ✓','ok');
+  }
+  function fmtSize(b){return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB';}
+  function toast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type}`;t.style.display='block';setTimeout(()=>t.style.display='none',3000);}
+</script>
+</body>
+</html>
