@@ -488,18 +488,19 @@ Para colors en barChart usa "#1D9E75" para crecimiento y "#D85A30" para declive.
 {
   "kpis": [{"label":"...","value":"...","trend":"...","trendType":"up|down|neutral"}],
   "dualBarChart": {"title":"Prescripciones vs Ventas por Laboratorio","labels":[...],"prescripciones":[...],"ventas":[...]},
-  "lineChart": {"title":"...","labels":[...],"series":[{"name":"...","data":[...]}]},
-  "variacionChart": {"title":"Variación neta market share","labels":[...],"values":[]},
+  "lineChart": {"title":"Evolución Prescripciones vs Ventas — Top 3 Laboratorios","labels":[...],"series":[{"name":"LABX Presc.","data":[...]},{"name":"LABX Ventas","data":[...]},{"name":"LABY Presc.","data":[...]},{"name":"LABY Ventas","data":[...]}]},
+  "variacionChart": {"title":"Gap Prescripción vs Ventas por Laboratorio (pp)","labels":[...],"values":[]},
   "oportunidades": ["...","...","..."],
   "alertas": ["...","...","..."],
   "recomendaciones": ["...","...","..."]
 }
-- kpis: 4 métricas clave comparando prescripciones vs ventas
-- dualBarChart: para cada laboratorio incluye su % en prescripciones Y su % en ventas (máx 10 laboratorios)
-- lineChart: evolución de los 3 principales laboratorios en prescripciones
-- variacionChart: gap entre prescripciones y ventas por laboratorio (prescripcion% - venta%)
+INSTRUCCIONES CRÍTICAS:
+- kpis: 4 métricas clave comparando prescripciones vs ventas (ej: mayor gap, laboratorio con más oportunidad, etc)
+- dualBarChart: para CADA laboratorio incluye su % en prescripciones Y su % en ventas — AMBOS datos son obligatorios
+- lineChart: muestra la evolución temporal de los TOP 3 laboratorios con DOS series por laboratorio: una para prescripciones y otra para ventas. Así se compara la evolución de ambos en el tiempo.
+- variacionChart: para CADA laboratorio calcula el GAP = prescripción% MENOS venta%. Positivo = prescribe más de lo que vende (oportunidad). Negativo = vende más de lo que prescribe (riesgo).
 - oportunidades, alertas, recomendaciones: basadas en los gaps detectados
-Eres experto en análisis farmacéutico 360°. El archivo A son prescripciones (base), el archivo B son ventas. Cruza por laboratorio y detecta gaps.`
+Eres experto en análisis farmacéutico 360°. El archivo A son PRESCRIPCIONES (base principal), el archivo B son VENTAS. Cruza AMBOS por laboratorio y detecta gaps entre prescripción y venta real.`
   };
 
   async function runAnalysis(){
