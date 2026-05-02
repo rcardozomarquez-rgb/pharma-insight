@@ -170,8 +170,9 @@
     <div class="card">
       <div class="card-title"><span class="step">2</span> Cargar datos</div>
       <div class="upload-tabs">
-        <button class="upload-tab active" id="tabFile" onclick="switchTab('file')">📂 Archivo Excel / CSV</button>
-        <button class="upload-tab" id="tabImg" onclick="switchTab('img')">🖼️ Imagen / Captura de pantalla</button>
+        <button class="upload-tab active" id="tabFile" onclick="switchTab('file')">📂 Un archivo</button>
+        <button class="upload-tab" id="tabImg" onclick="switchTab('img')">🖼️ Una imagen</button>
+        <button class="upload-tab" id="tabCompare" onclick="switchTab('compare')" style="flex:1.2">⚖️ Comparar dos</button>
       </div>
       <!-- File panel -->
       <div id="panelFile">
@@ -184,10 +185,7 @@
         </div>
         <div id="fileLoaded" class="file-loaded hidden">
           <div style="font-size:28px">📄</div>
-          <div style="flex:1">
-            <div class="file-loaded-name" id="fName"></div>
-            <div class="file-loaded-meta" id="fMeta"></div>
-          </div>
+          <div style="flex:1"><div class="file-loaded-name" id="fName"></div><div class="file-loaded-meta" id="fMeta"></div></div>
           <button class="btn btn-ghost" onclick="clearFile()">✕ Quitar</button>
         </div>
       </div>
@@ -203,15 +201,44 @@
         <div id="imgLoaded" class="hidden" style="margin-top:12px">
           <div class="img-preview-wrap">
             <img id="imgPreview" src="" alt="Preview" />
-            <div class="img-overlay">
-              <button class="btn btn-ghost" style="background:#fff;font-size:12px;height:34px" onclick="clearImage()">✕ Quitar</button>
-            </div>
+            <div class="img-overlay"><button class="btn btn-ghost" style="background:#fff;font-size:12px;height:34px" onclick="clearImage()">✕ Quitar</button></div>
           </div>
           <div class="file-loaded" style="margin-top:8px">
             <div style="font-size:24px">🖼️</div>
-            <div style="flex:1">
-              <div class="file-loaded-name" id="imgName"></div>
-              <div class="file-loaded-meta">Imagen lista para analizar</div>
+            <div style="flex:1"><div class="file-loaded-name" id="imgName"></div><div class="file-loaded-meta">Imagen lista para analizar</div></div>
+          </div>
+        </div>
+      </div>
+      <!-- Compare panel -->
+      <div id="panelCompare" class="hidden">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:12px;padding:10px 14px;background:var(--accent2-light);border-radius:var(--radius);border:1px solid #bfdbfe">
+          ⚖️ Sube dos archivos para comparar — Excel, CSV o imágenes en cualquier combinación
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px;font-family:var(--font-mono);text-transform:uppercase">Archivo A — Período 1</div>
+            <div class="drop-zone" id="dropZoneA" style="padding:24px 16px">
+              <input type="file" id="fileInputA" accept=".csv,.xlsx,.xls,.txt,image/*" onchange="handleCompareFile(event,'A')" />
+              <div class="drop-icon" style="font-size:24px">📂</div>
+              <div class="drop-title" style="font-size:13px">Excel, CSV o imagen</div>
+            </div>
+            <div id="loadedA" class="file-loaded hidden" style="margin-top:8px">
+              <div style="font-size:20px" id="iconA">📄</div>
+              <div style="flex:1"><div class="file-loaded-name" id="nameA" style="font-size:13px"></div><div class="file-loaded-meta" style="font-size:11px">Listo</div></div>
+              <button class="btn btn-ghost" style="height:32px;font-size:12px" onclick="clearCompare('A')">✕</button>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:8px;font-family:var(--font-mono);text-transform:uppercase">Archivo B — Período 2</div>
+            <div class="drop-zone" id="dropZoneB" style="padding:24px 16px">
+              <input type="file" id="fileInputB" accept=".csv,.xlsx,.xls,.txt,image/*" onchange="handleCompareFile(event,'B')" />
+              <div class="drop-icon" style="font-size:24px">📂</div>
+              <div class="drop-title" style="font-size:13px">Excel, CSV o imagen</div>
+            </div>
+            <div id="loadedB" class="file-loaded hidden" style="margin-top:8px;border-color:#bfdbfe;background:var(--accent2-light)">
+              <div style="font-size:20px" id="iconB">📄</div>
+              <div style="flex:1"><div class="file-loaded-name" id="nameB" style="font-size:13px"></div><div class="file-loaded-meta" style="font-size:11px;color:var(--accent2)">Listo</div></div>
+              <button class="btn btn-ghost" style="height:32px;font-size:12px" onclick="clearCompare('B')">✕</button>
             </div>
           </div>
         </div>
@@ -286,8 +313,10 @@
     activeTab=t;
     document.getElementById('tabFile').classList.toggle('active',t==='file');
     document.getElementById('tabImg').classList.toggle('active',t==='img');
+    document.getElementById('tabCompare').classList.toggle('active',t==='compare');
     document.getElementById('panelFile').classList.toggle('hidden',t!=='file');
     document.getElementById('panelImg').classList.toggle('hidden',t!=='img');
+    document.getElementById('panelCompare').classList.toggle('hidden',t!=='compare');
     updateBtn();
   }
 
@@ -369,8 +398,58 @@
     updateBtn();
   }
 
+  let compareA={type:null,data:null,mime:null,name:null};
+  let compareB={type:null,data:null,mime:null,name:null};
+
+  document.getElementById('dropZoneA').addEventListener('dragover',e=>{e.preventDefault();e.currentTarget.classList.add('over')});
+  document.getElementById('dropZoneA').addEventListener('dragleave',e=>e.currentTarget.classList.remove('over'));
+  document.getElementById('dropZoneA').addEventListener('drop',e=>{e.preventDefault();e.currentTarget.classList.remove('over');processCompareFile(e.dataTransfer.files[0],'A')});
+  document.getElementById('dropZoneB').addEventListener('dragover',e=>{e.preventDefault();e.currentTarget.classList.add('over')});
+  document.getElementById('dropZoneB').addEventListener('dragleave',e=>e.currentTarget.classList.remove('over'));
+  document.getElementById('dropZoneB').addEventListener('drop',e=>{e.preventDefault();e.currentTarget.classList.remove('over');processCompareFile(e.dataTransfer.files[0],'B')});
+
+  function handleCompareFile(e,slot){processCompareFile(e.target.files[0],slot);}
+
+  function processCompareFile(file,slot){
+    if(!file)return;
+    const ext=file.name.split('.').pop().toLowerCase();
+    const isImg=file.type.startsWith('image/');
+    const obj=slot==='A'?compareA:compareB;
+    const reader=new FileReader();
+    if(isImg){
+      reader.onload=e=>{obj.type='img';obj.data=e.target.result.split(',')[1];obj.mime=file.type;obj.name=file.name;showCompareLoaded(slot,file,'🖼️');};
+      reader.readAsDataURL(file);
+    } else if(ext==='csv'||ext==='txt'){
+      reader.onload=e=>{obj.type='text';obj.data=e.target.result;obj.name=file.name;showCompareLoaded(slot,file,'📄');};
+      reader.readAsText(file,'UTF-8');
+    } else if(['xlsx','xls'].includes(ext)){
+      reader.onload=e=>{const wb=XLSX.read(e.target.result,{type:'binary'});obj.type='text';obj.data=XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]);obj.name=file.name;showCompareLoaded(slot,file,'📊');};
+      reader.readAsBinaryString(file);
+    }
+  }
+
+  function showCompareLoaded(slot,file,icon){
+    document.getElementById('dropZone'+slot).style.display='none';
+    document.getElementById('loaded'+slot).classList.remove('hidden');
+    document.getElementById('icon'+slot).textContent=icon;
+    document.getElementById('name'+slot).textContent=file.name;
+    updateBtn();
+  }
+
+  function clearCompare(slot){
+    const obj=slot==='A'?compareA:compareB;
+    obj.type=null;obj.data=null;obj.mime=null;obj.name=null;
+    document.getElementById('dropZone'+slot).style.display='';
+    document.getElementById('loaded'+slot).classList.add('hidden');
+    document.getElementById('fileInput'+slot).value='';
+    updateBtn();
+  }
+
   function updateBtn(){
-    const hasData=activeTab==='file'?!!fileData:!!imageData;
+    let hasData=false;
+    if(activeTab==='file') hasData=!!fileData;
+    else if(activeTab==='img') hasData=!!imageData;
+    else if(activeTab==='compare') hasData=!!(compareA.data&&compareB.data);
     document.getElementById('runBtn').disabled=!(hasData&&selectedType&&apiKey);
   }
 
@@ -416,7 +495,19 @@ Para colors en barChart usa "#1D9E75" para crecimiento y "#D85A30" para declive.
 
     const custom=document.getElementById('customPrompt').value.trim();
     let messages;
-    if(activeTab==='img'&&imageData){
+    if(activeTab==='compare'){
+      const contentA=compareA.type==='img'
+        ?{type:'image',source:{type:'base64',media_type:compareA.mime,data:compareA.data}}
+        :{type:'text',text:`ARCHIVO A (${compareA.name}):\n\`\`\`\n${compareA.data.substring(0,8000)}\n\`\`\``};
+      const contentB=compareB.type==='img'
+        ?{type:'image',source:{type:'base64',media_type:compareB.mime,data:compareB.data}}
+        :{type:'text',text:`ARCHIVO B (${compareB.name}):\n\`\`\`\n${compareB.data.substring(0,8000)}\n\`\`\``};
+      messages=[{role:'user',content:[
+        contentA,
+        contentB,
+        {type:'text',text:`Compara estos dos archivos de Close-Up Analyzer y devuelve el JSON comparativo.${custom?'\nNota: '+custom:''}`}
+      ]}];
+    } else if(activeTab==='img'&&imageData){
       messages=[{role:'user',content:[
         {type:'image',source:{type:'base64',media_type:imageMime,data:imageData}},
         {type:'text',text:`Analiza esta captura de Close-Up Analyzer y devuelve el JSON.${custom?'\nNota: '+custom:''}`}
