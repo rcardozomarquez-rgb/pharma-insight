@@ -569,7 +569,15 @@ Eres experto en análisis farmacéutico 360°. El archivo A son PRESCRIPCIONES (
       ]}];
     } else {
       const preview=fileData.length>15000?fileData.substring(0,15000)+'\n...[truncado]':fileData;
-      messages=[{role:'user',content:`Datos de Close-Up Analyzer:\n\`\`\`\n${preview}\n\`\`\`\n${custom?'\nINSTRUCCIÓN PRIORITARIA DEL USUARIO (debes cumplirla obligatoriamente): '+custom:''}\nDevuelve solo el JSON.`}];
+      const csvRows=fileData.split('\n');
+      const headers=csvRows[0]?.split(',').map(h=>h.trim().toLowerCase())||[];
+      const medicoCol=headers.findIndex(h=>h.includes('medico')||h.includes('médico')||h.includes('doctor')||h.includes('nombre'));
+      let unicosInfo='';
+      if(medicoCol>=0){
+        const unicos=new Set(csvRows.slice(1).map(r=>r.split(',')[medicoCol]?.trim()).filter(Boolean));
+        unicosInfo=`\nDATO PRECALCULADO (usa este valor exacto, no lo recalcules): Total de médicos únicos en el archivo = ${unicos.size}. No cuentes filas, usa este número.`;
+      }
+      messages=[{role:'user',content:`Datos de Close-Up Analyzer:\n\`\`\`\n${preview}\n\`\`\`${unicosInfo}\n${custom?'\nINSTRUCCIÓN PRIORITARIA DEL USUARIO (debes cumplirla obligatoriamente): '+custom:''}\nDevuelve solo el JSON.`}];
     }
 
     try {
