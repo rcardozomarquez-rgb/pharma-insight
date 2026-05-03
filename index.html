@@ -355,11 +355,11 @@
     let medicoCol=-1, dataStartRow=1;
     for(let i=0;i<Math.min(20,csvRows.length);i++){
       const cols=csvRows[i].split(sep).map(h=>h.trim().toLowerCase().replace(/"/g,''));
-      const idx=cols.findIndex(h=>h==='nombre'||h==='nombre '||h==='medico'||h==='médico'||h==='doctor'||h==='nombre medico'||h==='nombre médico');
+      const idx=cols.findIndex(h=>h==='nombre');
       if(idx>=0){medicoCol=idx;dataStartRow=i+1;break;}
     }
     if(medicoCol>=0){
-      const unicos=new Set(csvRows.slice(dataStartRow).map(r=>r.split(sep)[medicoCol]?.trim().replace(/"/g,'')).filter(v=>v&&v.length>1));
+      const unicos=new Set(csvRows.slice(dataStartRow).map(r=>r.split(sep)[medicoCol]?.trim().replace(/"/g,'')).filter(v=>v&&v.length>2));
       unicosInfo=`\nDATO CRÍTICO PRECALCULADO: El archivo tiene exactamente ${unicos.size} médicos únicos. Usa SIEMPRE este número para "Total Médicos Únicos". No lo recalcules, no cuentes filas, el número correcto es ${unicos.size}.`;
     }
   }
