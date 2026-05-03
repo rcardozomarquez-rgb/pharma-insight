@@ -350,31 +350,28 @@
     unicosInfo='';
     if(!fileData) return;
     const csvRows=fileData.split('\n');
-    const firstRow=csvRows[0]||'';
-    const sep=firstRow.includes(';')?';':',';
-    let medicoCol=-1, dataStartRow=1, pxCol=-1;
+    const sep=(csvRows[0]||'').includes(';')?';':',';
+    let medicoCol=-1, dataStartRow=1, pxCol=-1, pxCount=0;
     for(let i=0;i<Math.min(20,csvRows.length);i++){
       const cols=csvRows[i].split(sep).map(h=>h.trim().toLowerCase().replace(/"/g,''));
       if(medicoCol<0){
         const idx=cols.findIndex(h=>h==='nombre');
         if(idx>=0){medicoCol=idx;dataStartRow=i+1;}
       }
-      // Find last 'px' column for ultimo periodo
-      let lastPx=-1;
-      cols.forEach((h,idx)=>{if(h==='px') lastPx=idx;});
-      if(lastPx>=0) pxCol=lastPx;
+      cols.forEach((h,idx)=>{
+        if(h==='px'){pxCount++;if(pxCount===2)pxCol=idx;}
+      });
     }
-    if(medicoCol>=0){
-      const unicos=new Set(csvRows.slice(dataStartRow).map(r=>r.split(sep)[medicoCol]?.trim().replace(/"/g,'')).filter(v=>v&&v.length>4&&isNaN(v)&&!v.includes(':')));
-      let totalPx=0;
-      if(pxCol>=0){
-        csvRows.slice(dataStartRow).forEach(r=>{
-          const val=parseFloat(r.split(sep)[pxCol]?.trim().replace(/"/g,''));
-          if(!isNaN(val)&&val>0) totalPx+=val;
-        });
-      }
-      unicosInfo=`\n\n⚠️ DATOS PRECALCULADOS OBLIGATORIOS - NO MODIFICAR:\n- Médicos únicos = ${unicos.size}. Usa SIEMPRE este número para cualquier KPI de médicos.\n- Total prescripciones (Px) último período = ${Math.round(totalPx)}. Usa SIEMPRE este número para prescripciones totales.\nLista médicos: ${[...unicos].join(', ')}.`;
+    if(medicoCol<0) return;
+    const unicos=new Set(csvRows.slice(dataStartRow).map(r=>r.split(sep)[medicoCol]?.trim().replace(/"/g,'')).filter(v=>v&&v.length>4&&isNaN(v)&&!v.includes(':')));
+    let totalPx=0;
+    if(pxCol>=0){
+      csvRows.slice(dataStartRow).forEach(r=>{
+        const val=parseFloat(r.split(sep)[pxCol]?.trim().replace(/"/g,''));
+        if(!isNaN(val)&&val>0) totalPx+=val;
+      });
     }
+    unicosInfo=`\n\n⚠️ DATOS PRECALCULADOS OBLIGATORIOS:\n- Médicos únicos = ${unicos.size}. USA SIEMPRE este número para KPIs de médicos.\n- Total Px último período = ${Math.round(totalPx)}. USA SIEMPRE este número para prescripciones totales.\nLista médicos: ${[...unicos].join(', ')}.`;
   }
   function showFileLoaded(file){
     fileName=file.name;
