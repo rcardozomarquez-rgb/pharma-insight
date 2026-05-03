@@ -582,7 +582,10 @@ Eres experto en análisis farmacéutico 360°. El archivo A son PRESCRIPCIONES (
       let unicosInfo='';
       if(medicoCol>=0){
         const unicos=new Set(csvRows.slice(dataStartRow).map(r=>r.split(sep)[medicoCol]?.trim().replace(/"/g,'')).filter(v=>v&&v.length>1));
+        alert(`DEBUG: columna=${medicoCol}, filaInicio=${dataStartRow}, médicos únicos=${unicos.size}`);
         unicosInfo=`\nDATO PRECALCULADO POR EL SISTEMA (usa este valor exacto, no lo recalcules): Total de médicos únicos en el archivo = ${unicos.size}. Este número ya está deduplicado. No cuentes filas, usa exactamente ${unicos.size}.`;
+      } else {
+        alert(`DEBUG: columna de médicos NO encontrada. Sep="${sep}"`);
       }
       messages=[{role:'user',content:`Datos de Close-Up Analyzer:\n\`\`\`\n${preview}\n\`\`\`${unicosInfo}\n${custom?'\nINSTRUCCIÓN PRIORITARIA DEL USUARIO (debes cumplirla obligatoriamente): '+custom:''}\nDevuelve solo el JSON.`}];
     }
