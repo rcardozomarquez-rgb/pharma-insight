@@ -360,7 +360,7 @@
     }
     if(medicoCol>=0){
       const unicos=new Set(csvRows.slice(dataStartRow).map(r=>r.split(sep)[medicoCol]?.trim().replace(/"/g,'')).filter(v=>v&&v.length>4&&isNaN(v)&&!v.includes(':')));
-      alert(`DEBUG: columna=${medicoCol}, filaInicio=${dataStartRow}, médicos únicos=${unicos.size}`);
+      unicosInfo=`\n\n⚠️ INSTRUCCIÓN OBLIGATORIA: El sistema ha contado ${unicos.size} médicos únicos en el archivo. Este es el único número válido para "Total Médicos Únicos" o "Médicos Únicos Prescriptores". PROHIBIDO usar cualquier otro número. Lista de médicos únicos: ${[...unicos].join(', ')}.`;
       unicosInfo=`\nDATO CRÍTICO PRECALCULADO: El archivo tiene exactamente ${unicos.size} médicos únicos. Usa SIEMPRE este número para "Total Médicos Únicos". No lo recalcules, no cuentes filas, el número correcto es ${unicos.size}.`;
     }
   }
