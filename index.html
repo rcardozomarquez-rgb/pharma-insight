@@ -498,7 +498,7 @@ Para colors en barChart usa "#1D9E75" para crecimiento y "#D85A30" para declive.
   const sysPrompts={
     prescripciones: sysBase + `\nEres experto en prescripciones farmacéuticas. Analiza tendencias por laboratorios, corporaciones, especialidad, regiones, moléculas y productos.`,
     ventas: sysBase + `\nEres experto en análisis de ventas farmacéuticas. Analiza ventas por laboratorios, corporaciones, subcanales, productos, presentaciones y moléculas asociadas, tipo de mercado, tipo de producto y forma farmacéutica.`,
-    medicos: sysBase + `\nEres experto en análisis de perfil prescriptivo médico. Analiza el comportamiento y perfil de prescripción de los médicos en los datos proporcionados.`,
+    medicos: sysBase + `\nEres experto en análisis de perfil prescriptivo médico. IMPORTANTE: Los datos pueden tener un médico repetido en múltiples filas porque el archivo está abierto por laboratorio y/o producto. Para contar el total de médicos SIEMPRE debes contar médicos ÚNICOS (sin duplicados por nombre o código de médico). Analiza el comportamiento y perfil de prescripción de los médicos en los datos proporcionados.`,
     comparacion360: `Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional. Estructura exacta:
 {
   "kpis": [{"label":"...","value":"...","trend":"...","trendType":"up|down|neutral"}],
