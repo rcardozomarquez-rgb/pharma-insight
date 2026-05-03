@@ -297,7 +297,7 @@
 <div id="toast" class="toast"></div>
 
 <script>
-  let apiKey='', fileData=null, imageData=null, imageMime='', fileName='', selectedType='', activeTab='file';
+  let apiKey='', fileData=null, imageData=null, imageMime='', fileName='', selectedType='', activeTab='file', unicosInfo='';
 
   // Drag & drop
   const dz=document.getElementById('dropZone');
@@ -333,18 +333,36 @@
     const ext=file.name.split('.').pop().toLowerCase();
     const reader=new FileReader();
     if(ext==='csv'||ext==='txt'){
-      reader.onload=e=>{fileData=e.target.result;showFileLoaded(file);};
+      reader.onload=e=>{fileData=e.target.result;calcUnicosInfo();showFileLoaded(file);};
       reader.readAsText(file,'UTF-8');
     } else if(['xlsx','xls'].includes(ext)){
       reader.onload=e=>{
         const wb=XLSX.read(e.target.result,{type:'binary'});
         fileData=XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]);
+        calcUnicosInfo();
         showFileLoaded(file);
       };
       reader.readAsBinaryString(file);
     } else {toast('Formato no soportado','err');}
   }
 
+  function calcUnicosInfo(){
+    unicosInfo='';
+    if(!fileData) return;
+    const csvRows=fileData.split('\n');
+    const firstRow=csvRows[0]||'';
+    const sep=firstRow.includes(';')?';':',';
+    let medicoCol=-1, dataStartRow=1;
+    for(let i=0;i<Math.min(15,csvRows.length);i++){
+      const cols=csvRows[i].split(sep).map(h=>h.trim().toLowerCase().replace(/"/g,'').replace(/\s+/g,' '));
+      const idx=cols.findIndex(h=>h==='nombre'||h.startsWith('nombre')||h.includes('medico')||h.includes('médico')||h.includes('doctor'));
+      if(idx>=0){medicoCol=idx;dataStartRow=i+1;break;}
+    }
+    if(medicoCol>=0){
+      const unicos=new Set(csvRows.slice(dataStartRow).map(r=>r.split(sep)[medicoCol]?.trim().replace(/"/g,'')).filter(v=>v&&v.length>1));
+      unicosInfo=`\nDATO CRÍTICO PRECALCULADO: El archivo tiene exactamente ${unicos.size} médicos únicos. Usa SIEMPRE este número para "Total Médicos Únicos". No lo recalcules, no cuentes filas, el número correcto es ${unicos.size}.`;
+    }
+  }
   function showFileLoaded(file){
     fileName=file.name;
     document.getElementById('dropZone').style.display='none';
@@ -569,32 +587,14 @@ Eres experto en análisis farmacéutico 360°. El archivo A son PRESCRIPCIONES (
       ]}];
     } else {
       const preview=fileData.length>15000?fileData.substring(0,15000)+'\n...[truncado]':fileData;
-      const csvRows=fileData.split('\n');
-      const firstRow=csvRows[0]||'';
-      const sep=firstRow.includes(';')?';':',';
-      let medicoCol=-1;
-      let dataStartRow=1;
-      for(let i=0;i<Math.min(15,csvRows.length);i++){
-        const cols=csvRows[i].split(sep).map(h=>h.trim().toLowerCase().replace(/"/g,'').replace(/\s+/g,' '));
-        const idx=cols.findIndex(h=>h==='nombre'||h==='nombre '||h.startsWith('nombre')||h.includes('medico')||h.includes('médico')||h.includes('doctor'));
-        if(idx>=0){medicoCol=idx;dataStartRow=i+1;break;}
-      }
-      let unicosInfo='';
-      if(medicoCol>=0){
-        const unicos=new Set(csvRows.slice(dataStartRow).map(r=>r.split(sep)[medicoCol]?.trim().replace(/"/g,'')).filter(v=>v&&v.length>1));
-        alert(`DEBUG: columna=${medicoCol}, filaInicio=${dataStartRow}, médicos únicos=${unicos.size}`);
-        unicosInfo=`\nDATO PRECALCULADO POR EL SISTEMA (usa este valor exacto, no lo recalcules): Total de médicos únicos en el archivo = ${unicos.size}. Este número ya está deduplicado. No cuentes filas, usa exactamente ${unicos.size}.`;
-      } else {
-        alert(`DEBUG: columna de médicos NO encontrada. Sep="${sep}"`);
-      }
-      messages=[{role:'user',content:`Datos de Close-Up Analyzer:\n\`\`\`\n${preview}\n\`\`\`${unicosInfo}\n${custom?'\nINSTRUCCIÓN PRIORITARIA DEL USUARIO (debes cumplirla obligatoriamente): '+custom:''}\nDevuelve solo el JSON.`}];
+      messages=[{role:'user',content:`Datos de Close-Up Analyzer:\n\`\`\`\n${preview}\n\`\`\`\n${custom?'\nINSTRUCCIÓN PRIORITARIA DEL USUARIO (debes cumplirla obligatoriamente): '+custom:''}\nDevuelve solo el JSON.`}];
     }
 
     try {
       const res=await fetch('https://pharma-backend-wziv.onrender.com/analyze',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({apiKey,system:sysPrompts[selectedType],messages})
+        body:JSON.stringify({apiKey,system:sysPrompts[selectedType]+(unicosInfo||''),messages})
       });
       if(!res.ok){const e=await res.json();throw new Error(e.error||'Error: '+res.status);}
       const data=await res.json();
