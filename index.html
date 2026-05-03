@@ -257,12 +257,9 @@
     <div class="card">
       <div class="card-title"><span class="step">3</span> Tipo de análisis</div>
       <div class="analysis-grid">
-        <div class="a-card" onclick="selectA(this,'prescripciones')"><div class="a-check">✓</div><div class="a-emoji">💉</div><div class="a-name">Prescripciones</div><div class="a-desc">Tendencias por médico, especialidad y producto.</div></div>
-        <div class="a-card" onclick="selectA(this,'market_share')"><div class="a-check">✓</div><div class="a-emoji">📊</div><div class="a-name">Market Share</div><div class="a-desc">Participación por molécula, laboratorio y región.</div></div>
-        <div class="a-card" onclick="selectA(this,'medicos')"><div class="a-check">✓</div><div class="a-emoji">👨‍⚕️</div><div class="a-name">Médicos</div><div class="a-desc">Perfil prescriptor y segmentación.</div></div>
-        <div class="a-card" onclick="selectA(this,'producto')"><div class="a-check">✓</div><div class="a-emoji">💊</div><div class="a-name">Por producto</div><div class="a-desc">Desempeño por producto y presentación.</div></div>
-        <div class="a-card" onclick="selectA(this,'molecula')"><div class="a-check">✓</div><div class="a-emoji">🧬</div><div class="a-name">Por molécula</div><div class="a-desc">Comparativa entre moléculas competidoras.</div></div>
-        <div class="a-card" onclick="selectA(this,'ejecutivo')"><div class="a-check">✓</div><div class="a-emoji">📋</div><div class="a-name">Reporte ejecutivo</div><div class="a-desc">Resumen gerencial con hallazgos y recomendaciones.</div></div>
+        <div class="a-card" onclick="selectA(this,'prescripciones')"><div class="a-check">✓</div><div class="a-emoji">💉</div><div class="a-name">Prescripciones</div><div class="a-desc">Tendencias por laboratorios, corporaciones, especialidad, regiones, moléculas, productos y moléculas.</div></div>
+        <div class="a-card" onclick="selectA(this,'ventas')"><div class="a-check">✓</div><div class="a-emoji">💰</div><div class="a-name">Ventas</div><div class="a-desc">Análisis de ventas por laboratorios, corporaciones, subcanales, productos, presentaciones y moléculas asociadas, tipo de mercado, tipo de producto y forma farmacéutica.</div></div>
+        <div class="a-card" onclick="selectA(this,'medicos')"><div class="a-check">✓</div><div class="a-emoji">👨‍⚕️</div><div class="a-name">Médicos</div><div class="a-desc">Análisis de perfil prescriptivo.</div></div>
         <div class="a-card" onclick="selectA(this,'comparacion360');switchTab('compare')" style="border-color:#1a56db;background:#ebf0fd"><div class="a-check" style="background:#1a56db">✓</div><div class="a-emoji">🔄</div><div class="a-name" style="color:#1a56db">Comparación 360°</div><div class="a-desc">Sube Archivo A (prescripciones) y Archivo B (ventas) arriba.</div></div>
       </div>
     </div>
@@ -271,13 +268,7 @@
     <div class="card">
       <div class="card-title"><span class="step">4</span> Instrucción adicional <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3);font-family:var(--font-body)">(opcional)</span></div>
       <textarea id="customPrompt" placeholder="Ej: Enfócate en los médicos con más de 50 prescripciones, compara vs período anterior..."></textarea>
-      <div class="chips">
-        <span class="chip" onclick="addChip('Identifica los 10 médicos con mayor potencial prescriptor')">🏆 Top médicos</span>
-        <span class="chip" onclick="addChip('Moléculas con mayor crecimiento en el último trimestre')">📈 Moléculas en crecimiento</span>
-        <span class="chip" onclick="addChip('Genera un análisis FODA basado en los datos')">🔍 Análisis FODA</span>
-        <span class="chip" onclick="addChip('Identifica oportunidades de mercado no aprovechadas')">💡 Oportunidades</span>
-        <span class="chip" onclick="addChip('¿Qué médicos prescriben la competencia y no nuestros productos?')">🎯 Médicos de competencia</span>
-      </div>
+      <div class="chips" id="chipsContainer"></div>
     </div>
 
     <!-- Action bar -->
@@ -399,11 +390,30 @@
     updateBtn();
   }
 
-  const typeNames={prescripciones:'Prescripciones',market_share:'Market Share',medicos:'Médicos',producto:'Por producto',molecula:'Por molécula',ejecutivo:'Reporte ejecutivo',comparacion360:'Comparación 360°'};
+  const typeNames={prescripciones:'Prescripciones',ventas:'Ventas',medicos:'Médicos',comparacion360:'Comparación 360°'};
+  const chipsMap = {
+    medicos: [
+      {icon:'🏆', label:'Análisis de 10 médicos top', text:'Identifica los 10 médicos top según los datos cargados y realiza un análisis detallado de su perfil prescriptivo incluyendo productos, moléculas, especialidad y tendencias.'},
+      {icon:'📋', label:'Análisis de 50 médicos top', text:'Identifica los 50 médicos top según los datos cargados y realiza un análisis detallado de su perfil prescriptivo incluyendo productos, moléculas, especialidad y tendencias.'}
+    ]
+  };
+  function renderChips(type){
+    const container=document.getElementById('chipsContainer');
+    container.innerHTML='';
+    const chips=chipsMap[type]||[];
+    chips.forEach(c=>{
+      const span=document.createElement('span');
+      span.className='chip';
+      span.textContent=c.icon+' '+c.label;
+      span.onclick=()=>addChip(c.text);
+      container.appendChild(span);
+    });
+  }
   function selectA(el,type){
     document.querySelectorAll('.a-card').forEach(c=>c.classList.remove('selected'));
     el.classList.add('selected'); selectedType=type;
     document.getElementById('infoType').textContent=typeNames[type];
+    renderChips(type);
     updateBtn();
   }
 
@@ -486,12 +496,9 @@
 Para colors en barChart usa "#1D9E75" para crecimiento y "#D85A30" para declive.`;
 
   const sysPrompts={
-    prescripciones: sysBase + `\nEres experto en prescripciones farmacéuticas. Analiza médicos, productos y tendencias de prescripción.`,
-    market_share: sysBase + `\nEres experto en market share farmacéutico. Analiza participación por laboratorio, molécula y período.`,
-    medicos: sysBase + `\nEres experto en segmentación médica. Analiza potencial prescriptor, especialidades y oportunidades de visita.`,
-    producto: sysBase + `\nEres experto en portafolio farmacéutico. Analiza desempeño por producto, presentación y tendencia.`,
-    molecula: sysBase + `\nEres experto en análisis terapéutico. Analiza competencia entre moléculas, adopción y switching.`,
-    ejecutivo: sysBase + `\nEres director de inteligencia comercial. Genera análisis ejecutivo con KPIs, mercado, oportunidades y plan de acción.`,
+    prescripciones: sysBase + `\nEres experto en prescripciones farmacéuticas. Analiza tendencias por laboratorios, corporaciones, especialidad, regiones, moléculas y productos.`,
+    ventas: sysBase + `\nEres experto en análisis de ventas farmacéuticas. Analiza ventas por laboratorios, corporaciones, subcanales, productos, presentaciones y moléculas asociadas, tipo de mercado, tipo de producto y forma farmacéutica.`,
+    medicos: sysBase + `\nEres experto en análisis de perfil prescriptivo médico. Analiza el comportamiento y perfil de prescripción de los médicos en los datos proporcionados.`,
     comparacion360: `Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional. Estructura exacta:
 {
   "kpis": [{"label":"...","value":"...","trend":"...","trendType":"up|down|neutral"}],
