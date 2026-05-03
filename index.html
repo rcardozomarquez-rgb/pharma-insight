@@ -353,9 +353,9 @@
     const firstRow=csvRows[0]||'';
     const sep=firstRow.includes(';')?';':',';
     let medicoCol=-1, dataStartRow=1;
-    for(let i=0;i<Math.min(15,csvRows.length);i++){
-      const cols=csvRows[i].split(sep).map(h=>h.trim().toLowerCase().replace(/"/g,'').replace(/\s+/g,' '));
-      const idx=cols.findIndex(h=>h==='nombre'||h.startsWith('nombre')||h.includes('medico')||h.includes('médico')||h.includes('doctor'));
+    for(let i=0;i<Math.min(20,csvRows.length);i++){
+      const cols=csvRows[i].split(sep).map(h=>h.trim().toLowerCase().replace(/"/g,''));
+      const idx=cols.findIndex(h=>h==='nombre'||h==='nombre '||h==='medico'||h==='médico'||h==='doctor'||h==='nombre medico'||h==='nombre médico');
       if(idx>=0){medicoCol=idx;dataStartRow=i+1;break;}
     }
     if(medicoCol>=0){
