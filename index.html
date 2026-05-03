@@ -654,22 +654,43 @@ Eres experto en análisis farmacéutico 360°. El archivo A son PRESCRIPCIONES (
       }
     }
     if(d.lineChart&&document.getElementById('dashLine')){
-      const colors=['#378ADD','#1D9E75','#D85A30','#8B5CF6','#F59E0B'];
+      const lineColors=['#1D9E75','#378ADD','#D85A30','#F59E0B','#8B5CF6','#E24B4A'];
+      const lineDash=[[],[5,3],[],[5,3],[],[5,3]];
       new Chart(document.getElementById('dashLine'),{
         type:'line',
-        data:{labels:d.lineChart.labels,datasets:(d.lineChart.series||[]).map((s,i)=>({label:s.name,data:s.data,borderColor:colors[i],backgroundColor:'transparent',tension:0.3,pointRadius:3,borderDash:i===1?[5,3]:[]}))},
-        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:tc,font:{size:11},boxWidth:12}}},scales:{x:{grid:{color:gc},ticks:{color:tc}},y:{grid:{color:gc},ticks:{color:tc}}}}
+        data:{labels:d.lineChart.labels,datasets:(d.lineChart.series||[]).map((s,i)=>({
+          label:s.name,
+          data:s.data,
+          borderColor:lineColors[i%lineColors.length],
+          backgroundColor:'transparent',
+          tension:0.3,
+          pointRadius:3,
+          borderDash:lineDash[i%lineDash.length],
+          pointStyle:i%2===0?'circle':'triangle'
+        }))},
+        options:{
+          responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:true,labels:{color:tc,font:{size:11},boxWidth:12,usePointStyle:true}}},
+          scales:{
+            x:{grid:{color:gc},ticks:{color:tc}},
+            y:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'}}
+          }
+        }
       });
     }
     if(d.variacionChart&&document.getElementById('dashVar')){
       new Chart(document.getElementById('dashVar'),{
         type:'bar',
-        data:{labels:d.variacionChart.labels,datasets:[{data:d.variacionChart.values,backgroundColor:d.variacionChart.values.map(v=>v>=0?'#1D9E75':'#D85A30'),borderRadius:4}]},
+        data:{labels:d.variacionChart.labels,datasets:[{
+          data:d.variacionChart.values,
+          backgroundColor:d.variacionChart.values.map(v=>v>=0?'#1D9E75':'#E24B4A'),
+          borderRadius:4
+        }]},
         options:{
           responsive:true,maintainAspectRatio:false,
           plugins:{
             legend:{display:false},
-            tooltip:{callbacks:{label:ctx=>`Gap: ${ctx.raw.toFixed(2)} pp`}}
+            tooltip:{callbacks:{label:ctx=>ctx.raw>=0?`Oportunidad: +${ctx.raw.toFixed(2)} pp`:`Riesgo: ${ctx.raw.toFixed(2)} pp`}}
           },
           scales:{
             x:{grid:{display:false},ticks:{color:tc,font:{size:11}}},
@@ -691,3 +712,4 @@ Eres experto en análisis farmacéutico 360°. El archivo A son PRESCRIPCIONES (
 </script>
 </body>
 </html>
+
