@@ -575,13 +575,13 @@ Eres experto en análisis farmacéutico 360°. El archivo A son PRESCRIPCIONES (
       let medicoCol=-1;
       let dataStartRow=1;
       for(let i=0;i<Math.min(15,csvRows.length);i++){
-        const cols=csvRows[i].split(sep).map(h=>h.trim().toLowerCase().replace(/"/g,''));
-        const idx=cols.findIndex(h=>h==='nombre'||h.startsWith('nombre')||h.includes('medico')||h.includes('médico')||h.includes('doctor'));
+        const cols=csvRows[i].split(sep).map(h=>h.trim().toLowerCase().replace(/"/g,'').replace(/\s+/g,' '));
+        const idx=cols.findIndex(h=>h==='nombre'||h==='nombre '||h.startsWith('nombre')||h.includes('medico')||h.includes('médico')||h.includes('doctor'));
         if(idx>=0){medicoCol=idx;dataStartRow=i+1;break;}
       }
       let unicosInfo='';
       if(medicoCol>=0){
-        const unicos=new Set(csvRows.slice(dataStartRow).map(r=>r.split(sep)[medicoCol]?.trim().replace(/"/g,'')).filter(Boolean));
+        const unicos=new Set(csvRows.slice(dataStartRow).map(r=>r.split(sep)[medicoCol]?.trim().replace(/"/g,'')).filter(v=>v&&v.length>1));
         unicosInfo=`\nDATO PRECALCULADO POR EL SISTEMA (usa este valor exacto, no lo recalcules): Total de médicos únicos en el archivo = ${unicos.size}. Este número ya está deduplicado. No cuentes filas, usa exactamente ${unicos.size}.`;
       }
       messages=[{role:'user',content:`Datos de Close-Up Analyzer:\n\`\`\`\n${preview}\n\`\`\`${unicosInfo}\n${custom?'\nINSTRUCCIÓN PRIORITARIA DEL USUARIO (debes cumplirla obligatoriamente): '+custom:''}\nDevuelve solo el JSON.`}];
