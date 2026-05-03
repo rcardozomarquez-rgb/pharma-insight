@@ -286,8 +286,8 @@
       <div class="results-header">
         <div class="results-title">Resultados del análisis</div>
         <div class="results-actions">
-          <button class="btn btn-ghost" style="height:36px;font-size:12px" onclick="copyResult()">📋 Copiar</button>
-          <button class="btn btn-ghost" style="height:36px;font-size:12px" onclick="downloadResult()">⬇ Descargar</button>
+          <button class="btn btn-ghost" style="height:36px;font-size:12px" onclick="screenshotResult()">📸 Copiar imagen</button>
+          <button class="btn btn-ghost" style="height:36px;font-size:12px" onclick="downloadHTML()">⬇ Descargar HTML</button>
         </div>
       </div>
       <div class="results-body"><div id="resultContent" class="md-out"></div></div>
@@ -701,15 +701,34 @@ Eres experto en análisis farmacéutico 360°. El archivo A son PRESCRIPCIONES (
     }
   }
 
-  function copyResult(){navigator.clipboard.writeText(document.getElementById('resultContent').innerText).then(()=>toast('Copiado ✓','ok'));}
-  function downloadResult(){
-    const blob=new Blob([document.getElementById('resultContent').innerText],{type:'text/plain;charset=utf-8'});
-    const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:`pharma-insight-${selectedType}-${new Date().toISOString().split('T')[0]}.txt`});
-    a.click();toast('Descargado ✓','ok');
+  async function screenshotResult(){
+    try {
+      const el=document.getElementById('resultContent');
+      const canvas=await html2canvas(el,{backgroundColor:'#ffffff',scale:2,useCORS:true});
+      canvas.toBlob(blob=>{
+        const item=new ClipboardItem({'image/png':blob});
+        navigator.clipboard.write([item]).then(()=>toast('Imagen copiada ✓','ok')).catch(()=>{
+          // fallback: download as image
+          const a=Object.assign(document.createElement('a'),{href:canvas.toDataURL(),download:`pharma-insight-${selectedType}-${new Date().toISOString().split('T')[0]}.png`});
+          a.click(); toast('Guardada como imagen ✓','ok');
+        });
+      });
+    } catch(e){ toast('Error al capturar: '+e.message,'err'); }
+  }
+
+  function downloadHTML(){
+    const content=document.getElementById('resultContent').innerHTML;
+    const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Pharma Insight — ${typeNames[selectedType]||'Análisis'}</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"><\/script>
+<style>body{font-family:sans-serif;padding:32px;background:#fff;color:#111}h2{color:#0a6e5c}table{width:100%;border-collapse:collapse}th{background:#f7f8fa;padding:10px}td{padding:10px;border-bottom:1px solid #eee}.card{background:#f7f8fa;border-radius:8px;padding:16px;margin:8px}</style>
+</head><body>${content}</body></html>`;
+    const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+    const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:`pharma-insight-${selectedType}-${new Date().toISOString().split('T')[0]}.html`});
+    a.click(); toast('HTML descargado ✓','ok');
   }
   function fmtSize(b){return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB';}
   function toast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type}`;t.style.display='block';setTimeout(()=>t.style.display='none',3000);}
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </body>
 </html>
-
