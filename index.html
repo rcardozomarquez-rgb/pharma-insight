@@ -267,7 +267,7 @@
     <!-- Step 4: Custom prompt -->
     <div class="card">
       <div class="card-title"><span class="step">4</span> Instrucción adicional <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3);font-family:var(--font-body)">(opcional)</span></div>
-      <textarea id="customPrompt" placeholder="Ej: Enfócate en los médicos con más de 50 prescripciones, compara vs período anterior..."></textarea>
+      <textarea id="customPrompt" placeholder="Ej: Enfócate en los médicos con más de 50 prescripciones, compara vs período anterior..." oninput="updateChipsState()"></textarea>
       <div class="chips" id="chipsContainer"></div>
     </div>
 
@@ -394,7 +394,8 @@
   const chipsMap = {
     medicos: [
       {icon:'🏆', label:'Análisis de 10 médicos top', text:'Identifica los 10 médicos top según los datos cargados y realiza un análisis detallado de su perfil prescriptivo incluyendo productos, moléculas, especialidad y tendencias.'},
-      {icon:'📋', label:'Análisis de 50 médicos top', text:'Identifica los 50 médicos top según los datos cargados y realiza un análisis detallado de su perfil prescriptivo incluyendo productos, moléculas, especialidad y tendencias.'}
+      {icon:'📋', label:'Análisis de 50 médicos top', text:'Identifica los 50 médicos top según los datos cargados y realiza un análisis detallado de su perfil prescriptivo incluyendo productos, moléculas, especialidad y tendencias.'},
+      {icon:'💊', label:'Análisis de productos y relación con médicos', text:'Analiza los productos presentes en los datos, identifica qué médicos prescriben cada producto, volumen por producto y la relación entre médicos y productos destacando los de mayor impacto.'}
     ]
   };
   function renderChips(type){
@@ -474,7 +475,21 @@
     document.getElementById('runBtn').disabled=!(hasData&&selectedType&&apiKey);
   }
 
-  function addChip(t){const ta=document.getElementById('customPrompt');ta.value=(ta.value?ta.value+' ':'')+t;ta.focus();}
+  function updateChipsState(){
+    const hasText=document.getElementById('customPrompt').value.trim().length>0;
+    document.querySelectorAll('#chipsContainer .chip').forEach(c=>{
+      c.style.opacity=hasText?'0.35':'1';
+      c.style.pointerEvents=hasText?'none':'auto';
+      c.title=hasText?'Borra la instrucción adicional para usar los chips':'';
+    });
+  }
+  function addChip(t){
+    const ta=document.getElementById('customPrompt');
+    if(ta.value.trim()) return;
+    ta.value=t;
+    ta.focus();
+    updateChipsState();
+  }
 
   const sysBase = `Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin bloques de código, sin explicaciones. El JSON debe tener exactamente esta estructura:
 {
@@ -493,12 +508,13 @@
 - oportunidades: 3 oportunidades concretas (texto corto)
 - alertas: 3 alertas críticas (texto corto)
 - recomendaciones: 3 acciones concretas con plazo
-Para colors en barChart usa "#1D9E75" para crecimiento y "#D85A30" para declive.`;
+Para colors en barChart usa "#1D9E75" para crecimiento y "#D85A30" para declive.
+REGLA CRÍTICA PARA TODOS LOS ANÁLISIS: El archivo puede tener una fila por cada combinación médico+laboratorio+producto, por lo que un mismo médico aparece REPETIDO muchas veces. Siempre que cuentes médicos DEBES hacer deduplicación estricta: cuenta cada médico UNA SOLA VEZ por su nombre o código único. Nunca cuentes filas, siempre cuenta valores únicos de la columna de médico.`;
 
   const sysPrompts={
     prescripciones: sysBase + `\nEres experto en prescripciones farmacéuticas. Analiza tendencias por laboratorios, corporaciones, especialidad, regiones, moléculas y productos.`,
     ventas: sysBase + `\nEres experto en análisis de ventas farmacéuticas. Analiza ventas por laboratorios, corporaciones, subcanales, productos, presentaciones y moléculas asociadas, tipo de mercado, tipo de producto y forma farmacéutica.`,
-    medicos: sysBase + `\nEres experto en análisis de perfil prescriptivo médico. IMPORTANTE: Los datos pueden tener un médico repetido en múltiples filas porque el archivo está abierto por laboratorio y/o producto. Para contar el total de médicos SIEMPRE debes contar médicos ÚNICOS (sin duplicados por nombre o código de médico). Analiza el comportamiento y perfil de prescripción de los médicos en los datos proporcionados.`,
+    medicos: sysBase + `\nEres experto en análisis de perfil prescriptivo médico. Analiza el comportamiento y perfil de prescripción de los médicos en los datos proporcionados.`,
     comparacion360: `Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional. Estructura exacta:
 {
   "kpis": [{"label":"...","value":"...","trend":"...","trendType":"up|down|neutral"}],
@@ -549,11 +565,11 @@ Eres experto en análisis farmacéutico 360°. El archivo A son PRESCRIPCIONES (
     } else if(activeTab==='img'&&imageData){
       messages=[{role:'user',content:[
         {type:'image',source:{type:'base64',media_type:imageMime,data:imageData}},
-        {type:'text',text:`Analiza esta captura de Close-Up Analyzer y devuelve el JSON.${custom?'\nNota: '+custom:''}`}
+        {type:'text',text:`Analiza esta captura de Close-Up Analyzer y devuelve el JSON.${custom?'\nINSTRUCCIÓN PRIORITARIA DEL USUARIO (debes cumplirla obligatoriamente): '+custom:''}`}
       ]}];
     } else {
       const preview=fileData.length>15000?fileData.substring(0,15000)+'\n...[truncado]':fileData;
-      messages=[{role:'user',content:`Datos de Close-Up Analyzer:\n\`\`\`\n${preview}\n\`\`\`\n${custom?'\nNota: '+custom:''}\nDevuelve solo el JSON.`}];
+      messages=[{role:'user',content:`Datos de Close-Up Analyzer:\n\`\`\`\n${preview}\n\`\`\`\n${custom?'\nINSTRUCCIÓN PRIORITARIA DEL USUARIO (debes cumplirla obligatoriamente): '+custom:''}\nDevuelve solo el JSON.`}];
     }
 
     try {
