@@ -755,7 +755,7 @@ Eres experto en análisis farmacéutico 360°. El archivo A son PRESCRIPCIONES (
         new Chart(document.getElementById('dashBar'),{
           type:'bar',
           data:{labels:d.barChart.labels,datasets:[{data:d.barChart.values,backgroundColor:d.barChart.colors||'#378ADD',borderRadius:4,tooltip:{callbacks:{label:ctx=>`${ctx.raw.toFixed(1)}%`}}}]},
-          options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'}},y:{grid:{display:false},ticks:{color:tc,font:{size:11}}}}}
+          options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'}},y:{grid:{display:false},ticks:{color:tc,font:{size:9},maxTicksLimit:10},afterFit:(scale)=>{scale.width=180;}}}}
         });
       }
     }
