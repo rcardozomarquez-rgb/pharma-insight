@@ -387,23 +387,42 @@
     // Buscar los 6 criterios y contar únicos con Rnk en último período
     const criteriosCols={};
     const criteriosNombres=['laboratorios','clase terapeutica','molecula','productos','genericos','presentaciones'];
+    let fila8Cols=[], fila9Cols=[];
     for(let i=0;i<Math.min(20,csvRows.length);i++){
       const cols=csvRows[i].split(sep).map(h=>h.trim().toLowerCase().replace(/"/g,''));
-      criteriosNombres.forEach(crit=>{
-        if(!criteriosCols[crit]){
-          const idx=cols.findIndex(h=>h===crit);
-          if(idx>=0) criteriosCols[crit]={col:idx, rnkCol:idx+3};
-        }
-      });
+      // Detect fila9 (subheader with criterio names)
+      if(cols.some(h=>criteriosNombres.includes(h))){
+        fila9Cols=cols;
+        // fila8 is the row above
+        if(i>0) fila8Cols=csvRows[i-1].split(sep).map(h=>h.trim().toLowerCase().replace(/"/g,''));
+        break;
+      }
     }
+    // For each criterio find its col, then find last TAM's Rnk col using fila8
+    Object.keys(criteriosCols).forEach(k=>delete criteriosCols[k]);
+    criteriosNombres.forEach(crit=>{
+      const col=fila9Cols.findIndex(h=>h===crit);
+      if(col<0) return;
+      // Find all Rnk cols after this criterio col
+      const rnkCols=[];
+      for(let j=col+1;j<Math.min(col+6,fila9Cols.length);j++){
+        if(fila9Cols[j]==='rnk') rnkCols.push(j);
+      }
+      // Last Rnk = last period (TAM 03/26)
+      // First Rnk = first period (TAM 03/25)
+      const rnk1=rnkCols[0]||-1;
+      const rnk2=rnkCols[rnkCols.length-1]||-1;
+      if(col>=0) criteriosCols[crit]={col,rnk1,rnk2};
+    });
     const criteriosUnicos={};
-    Object.entries(criteriosCols).forEach(([crit,{col,rnkCol}])=>{
+    Object.entries(criteriosCols).forEach(([crit,{col,rnk1,rnk2}])=>{
       const unicos=new Set();
       csvRows.slice(dataStartRow).forEach(r=>{
         const cols=r.split(sep);
         const val=cols[col]?.trim().replace(/"/g,'');
-        const rnk=cols[rnkCol]?.trim().replace(/"/g,'');
-        if(val&&val.length>1&&rnk&&!isNaN(parseFloat(rnk))) unicos.add(val);
+        const r1=rnk1>=0?cols[rnk1]?.trim().replace(/"/g,''):'';
+        const r2=rnk2>=0?cols[rnk2]?.trim().replace(/"/g,''):'';
+        if(val&&val.length>1&&(r1||r2)) unicos.add(val);
       });
       if(unicos.size>0) criteriosUnicos[crit]=unicos.size;
     });
