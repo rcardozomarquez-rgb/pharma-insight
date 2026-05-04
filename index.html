@@ -351,7 +351,17 @@
     if(!fileData) return;
     const csvRows=fileData.split('\n');
     const sep=(csvRows[0]||'').includes(';')?';':',';
-    let medicoCol=-1, dataStartRow=1, pxCol=-1, pxCount=0;
+    let medicoCol=-1, dataStartRow=1, pxCol=-1, pxCount=0, geografia='';
+
+    // Extraer geografía de las primeras filas
+    for(let i=0;i<Math.min(10,csvRows.length);i++){
+      const val=csvRows[i].split(sep)[0]?.trim().replace(/"/g,'')||'';
+      if(val.toLowerCase().startsWith('geografia:')||val.toLowerCase().startsWith('geografía:')){
+        geografia=val.split(':').slice(1).join(':').trim();
+        break;
+      }
+    }
+
     for(let i=0;i<Math.min(20,csvRows.length);i++){
       const cols=csvRows[i].split(sep).map(h=>h.trim().toLowerCase().replace(/"/g,''));
       if(medicoCol<0){
@@ -371,7 +381,7 @@
         if(!isNaN(val)&&val>0) totalPx+=val;
       });
     }
-    unicosInfo=`\n\n⚠️ DATOS PRECALCULADOS OBLIGATORIOS:\n- Médicos únicos = ${unicos.size}. USA SIEMPRE este número para KPIs de médicos.\n- Total Px último período = ${Math.round(totalPx)}. USA SIEMPRE este número para prescripciones totales.\nLista médicos: ${[...unicos].join(', ')}.`;
+    unicosInfo=`\n\n⚠️ DATOS PRECALCULADOS OBLIGATORIOS:\n- Médicos únicos = ${unicos.size}. USA SIEMPRE este número para KPIs de médicos.\n- Total Px último período = ${Math.round(totalPx)}. USA SIEMPRE este número para prescripciones totales.${geografia?`\n- Ciudad/Geografía del reporte = ${geografia}. Menciona esta ciudad en el análisis y en los KPIs donde sea relevante.`:''}\nLista médicos: ${[...unicos].join(', ')}.`;
   }
   function showFileLoaded(file){
     fileName=file.name;
@@ -530,7 +540,7 @@
   "recomendaciones": ["...","...","..."]
 }
 - kpis: 4 métricas clave del análisis
-- barChart: ranking de los top elementos por volumen/share (máx 10)
+- barChart: ranking de los top elementos por volumen/share (máx 10). IMPORTANTE: antes de graficar, agrupa y consolida laboratorios con el mismo nombre o nombres muy similares (ej: "ABBOTT" y "ABBOTT NUTRICION" deben unificarse). Nunca repitas el mismo laboratorio dos veces en el gráfico.
 - lineChart: evolución temporal de los 3 elementos más importantes (máx 5 períodos)
 - variacionChart: variación neta de todos los elementos (positivos primero, negativos al final)
 - oportunidades: 3 oportunidades concretas (texto corto)
