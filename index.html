@@ -297,7 +297,7 @@
 <div id="toast" class="toast"></div>
 
 <script>
-  let apiKey='', fileData=null, imageData=null, imageMime='', fileName='', selectedType='', activeTab='file', unicosInfo='', geografiaActual='';
+  let apiKey='', fileData=null, imageData=null, imageMime='', fileName='', selectedType='', activeTab='file', unicosInfo='', geografiaActual='', mercadoActual='';
 
   // Drag & drop
   const dz=document.getElementById('dropZone');
@@ -353,13 +353,15 @@
     const sep=(csvRows[0]||'').includes(';')?';':',';
     let medicoCol=-1, dataStartRow=1, pxCol=-1, pxCount=0, geografia='';
 
-    // Extraer geografía de las primeras filas
+    // Extraer geografía y mercado de las primeras filas
     for(let i=0;i<Math.min(10,csvRows.length);i++){
       const val=csvRows[i].split(sep)[0]?.trim().replace(/"/g,'')||'';
       if(val.toLowerCase().startsWith('geografia:')||val.toLowerCase().startsWith('geografía:')){
         geografia=val.split(':').slice(1).join(':').trim();
         geografiaActual=geografia;
-        break;
+      }
+      if(val.toLowerCase().startsWith('mercados:')){
+        mercadoActual=val.split(':').slice(1).join(':').trim();
       }
     }
 
@@ -382,7 +384,31 @@
         if(!isNaN(val)&&val>0) totalPx+=val;
       });
     }
-    unicosInfo=`\n\n⚠️ DATOS PRECALCULADOS OBLIGATORIOS:\n- Médicos únicos = ${unicos.size}. USA SIEMPRE este número para KPIs de médicos.\n- Total Px último período = ${Math.round(totalPx)}. USA SIEMPRE este número para prescripciones totales.${geografia?`\n- Ciudad/Geografía del reporte = ${geografia}. Menciona esta ciudad en el análisis y en los KPIs donde sea relevante.`:''}\nLista médicos: ${[...unicos].join(', ')}.`;
+    // Buscar los 6 criterios y contar únicos con Rnk en último período
+    const criteriosCols={};
+    const criteriosNombres=['laboratorios','clase terapeutica','molecula','productos','genericos','presentaciones'];
+    for(let i=0;i<Math.min(20,csvRows.length);i++){
+      const cols=csvRows[i].split(sep).map(h=>h.trim().toLowerCase().replace(/"/g,''));
+      criteriosNombres.forEach(crit=>{
+        if(!criteriosCols[crit]){
+          const idx=cols.findIndex(h=>h===crit);
+          if(idx>=0) criteriosCols[crit]={col:idx, rnkCol:idx+3};
+        }
+      });
+    }
+    const criteriosUnicos={};
+    Object.entries(criteriosCols).forEach(([crit,{col,rnkCol}])=>{
+      const unicos=new Set();
+      csvRows.slice(dataStartRow).forEach(r=>{
+        const cols=r.split(sep);
+        const val=cols[col]?.trim().replace(/"/g,'');
+        const rnk=cols[rnkCol]?.trim().replace(/"/g,'');
+        if(val&&val.length>1&&rnk&&!isNaN(parseFloat(rnk))) unicos.add(val);
+      });
+      if(unicos.size>0) criteriosUnicos[crit]=unicos.size;
+    });
+    const criteriosStr=Object.entries(criteriosUnicos).map(([k,v])=>`- ${k.charAt(0).toUpperCase()+k.slice(1)} únicos = ${v}`).join('\n');
+    unicosInfo=`\n\n⚠️ DATOS PRECALCULADOS OBLIGATORIOS:\n- Médicos únicos = ${unicos.size}. USA SIEMPRE este número para KPIs de médicos.\n- Total Px último período = ${Math.round(totalPx)}. USA SIEMPRE este número para prescripciones totales.\n${criteriosStr}\n${geografia?`- Ciudad/Geografía = ${geografia}.`:''}\nLista médicos: ${[...unicos].join(', ')}.`;
   }
   function showFileLoaded(file){
     fileName=file.name;
@@ -636,9 +662,15 @@ Eres experto en análisis farmacéutico 360°. El archivo A son PRESCRIPCIONES (
     const trendIcon=t=>t==='up'?'↑':t==='down'?'↓':'→';
     const trendColor=t=>t==='up'?'var(--success)':t==='down'?'var(--danger)':'var(--text2)';
     return `
-      ${geografiaActual?`<div style="width:100%;border-left:4px solid var(--accent);padding:12px 20px;margin-bottom:20px">
-        <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Reporte de</div>
-        <div style="font-family:var(--font-display);font-size:28px;font-weight:700;color:var(--text);letter-spacing:-.5px">${geografiaActual}</div>
+      ${geografiaActual?`<div style="width:100%;border-left:4px solid var(--accent);padding:12px 20px;margin-bottom:20px;display:flex;gap:40px;align-items:center">
+        <div>
+          <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px">Geografía</div>
+          <div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--text)">${geografiaActual}</div>
+        </div>
+        ${mercadoActual?`<div style="border-left:1px solid var(--border);padding-left:40px">
+          <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px">Mercado</div>
+          <div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--accent)">${mercadoActual}</div>
+        </div>`:''}
       </div>`:''}
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
         ${(d.kpis||[]).map(k=>`
