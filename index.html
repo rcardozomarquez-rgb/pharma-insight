@@ -586,13 +586,14 @@
   "recomendaciones": ["...","...","..."]
 }
 - kpis: 4 métricas clave del análisis
-- barChart: ranking de los top elementos por volumen/share (máx 10). IMPORTANTE: antes de graficar, agrupa y consolida laboratorios con el mismo nombre o nombres muy similares (ej: "ABBOTT" y "ABBOTT NUTRICION" deben unificarse). Nunca repitas el mismo laboratorio dos veces en el gráfico.
+- barChart: ranking de los top elementos por volumen/share (máx 10). Si el usuario dio una INSTRUCCIÓN específica (ej: "top 10 médicos"), el barChart DEBE mostrar esos elementos (médicos, productos, etc.) y NO laboratorios. IMPORTANTE: agrupa laboratorios con nombres similares, nunca repitas el mismo dos veces.
 - lineChart: evolución temporal de los 3 elementos más importantes (máx 5 períodos)
 - variacionChart: variación neta de todos los elementos (positivos primero, negativos al final)
 - oportunidades: 3 oportunidades concretas (texto corto)
 - alertas: 3 alertas críticas (texto corto)
 - recomendaciones: 3 acciones concretas con plazo
 Para colors en barChart usa "#1D9E75" para crecimiento y "#D85A30" para declive.
+REGLA CRÍTICA: Si el usuario da una INSTRUCCIÓN PRIORITARIA, debes cumplirla al pie de la letra. Si pide "top 10 médicos", el barChart muestra médicos. Si pide "análisis de productos", el barChart muestra productos. La instrucción del usuario SIEMPRE tiene prioridad sobre el análisis por defecto.
 REGLA CRÍTICA PARA TODOS LOS ANÁLISIS: El archivo puede tener una fila por cada combinación médico+laboratorio+producto, por lo que un mismo médico aparece REPETIDO muchas veces. Siempre que cuentes médicos DEBES hacer deduplicación estricta: cuenta cada médico UNA SOLA VEZ por su nombre o código único. Nunca cuentes filas, siempre cuenta valores únicos de la columna de médico.`;
 
   const sysPrompts={
